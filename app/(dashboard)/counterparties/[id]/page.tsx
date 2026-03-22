@@ -3,11 +3,27 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getWorkspaceId } from "@/lib/workspace";
 import { db } from "@/lib/db";
+import { buttonVariants } from "@/lib/button-variants";
 import type { CounterpartyStatus, CounterpartyType } from "@prisma/client";
 
 // ---------------------------------------------------------------------------
 // Data
 // ---------------------------------------------------------------------------
+
+async function getContacts(counterpartyId: string, workspaceId: string) {
+  return db.contact.findMany({
+    where: { counterpartyId, workspaceId },
+    orderBy: { createdAt: "asc" },
+    select: {
+      id: true,
+      name: true,
+      title: true,
+      email: true,
+      phone: true,
+      linkedinUrl: true,
+    },
+  });
+}
 
 async function getCounterparty(id: string, workspaceId: string) {
   return db.counterparty.findFirst({
@@ -98,18 +114,117 @@ function DetailRow({
 
 function Section({
   title,
+  action,
   children,
 }: {
   title: string;
+  action?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <div className="rounded-lg border border-zinc-200 bg-white">
-      <div className="border-b border-zinc-100 px-5 py-3">
+      <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-3">
         <h2 className="text-sm font-medium text-zinc-700">{title}</h2>
+        {action}
       </div>
       <div className="px-5">{children}</div>
     </div>
+  );
+}
+
+type Contact = {
+  id: string;
+  name: string;
+  title: string | null;
+  email: string | null;
+  phone: string | null;
+  linkedinUrl: string | null;
+};
+
+function ContactsSection({
+  contacts,
+  counterpartyId,
+}: {
+  contacts: Contact[];
+  counterpartyId: string;
+}) {
+  return (
+    <Section
+      title="Contacts"
+      action={
+        <Link
+          href={`/counterparties/${counterpartyId}/contacts/new`}
+          className={buttonVariants({ variant: "outline", size: "xs" })}
+        >
+          + Add contact
+        </Link>
+      }
+    >
+      {contacts.length === 0 ? (
+        <p className="py-6 text-sm text-zinc-400">No contacts yet.</p>
+      ) : (
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-zinc-100">
+              <th className="py-2.5 pr-4 text-left text-xs font-medium uppercase tracking-wide text-zinc-400">
+                Name
+              </th>
+              <th className="py-2.5 pr-4 text-left text-xs font-medium uppercase tracking-wide text-zinc-400">
+                Title
+              </th>
+              <th className="py-2.5 pr-4 text-left text-xs font-medium uppercase tracking-wide text-zinc-400">
+                Email
+              </th>
+              <th className="py-2.5 pr-4 text-left text-xs font-medium uppercase tracking-wide text-zinc-400">
+                Phone
+              </th>
+              <th className="py-2.5 text-left text-xs font-medium uppercase tracking-wide text-zinc-400">
+                LinkedIn
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-zinc-100">
+            {contacts.map((c) => (
+              <tr key={c.id}>
+                <td className="py-3 pr-4 font-medium text-zinc-900">{c.name}</td>
+                <td className="py-3 pr-4 text-zinc-500">
+                  {c.title ?? <span className="text-zinc-300">—</span>}
+                </td>
+                <td className="py-3 pr-4">
+                  {c.email ? (
+                    <a
+                      href={`mailto:${c.email}`}
+                      className="text-zinc-600 hover:text-zinc-900 hover:underline underline-offset-4"
+                    >
+                      {c.email}
+                    </a>
+                  ) : (
+                    <span className="text-zinc-300">—</span>
+                  )}
+                </td>
+                <td className="py-3 pr-4 text-zinc-500">
+                  {c.phone ?? <span className="text-zinc-300">—</span>}
+                </td>
+                <td className="py-3">
+                  {c.linkedinUrl ? (
+                    <a
+                      href={c.linkedinUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-zinc-600 hover:text-zinc-900 hover:underline underline-offset-4"
+                    >
+                      LinkedIn ↗
+                    </a>
+                  ) : (
+                    <span className="text-zinc-300">—</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </Section>
   );
 }
 
@@ -165,7 +280,10 @@ export default async function CounterpartyDetailPage({
 
   const { id } = await params;
   const workspaceId = await getWorkspaceId(user.id);
-  const counterparty = await getCounterparty(id, workspaceId);
+  const [counterparty, contacts] = await Promise.all([
+    getCounterparty(id, workspaceId),
+    getContacts(id, workspaceId),
+  ]);
 
   if (!counterparty) return <NotFound />;
 
@@ -233,8 +351,10 @@ export default async function CounterpartyDetailPage({
           <DetailRow label="Updated">{formatDate(counterparty.updatedAt)}</DetailRow>
         </Section>
 
-        {/* Placeholders for future sections */}
-        <PlaceholderSection title="Contacts" />
+        {/* Contacts */}
+        <ContactsSection contacts={contacts} counterpartyId={id} />
+
+        {/* Deals — placeholder until Phase 2 */}
         <PlaceholderSection title="Deals" />
       </div>
     </div>
