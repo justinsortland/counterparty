@@ -37,11 +37,9 @@ export default async function DashboardLayout({
         </div>
 
         {/* User / sign out */}
-        <div className="border-t border-zinc-100 px-4 py-3">
-          <p className="truncate text-xs text-zinc-500">{user.email}</p>
-          <div className="mt-1">
-            <SignOutButton />
-          </div>
+        <div className="border-t border-zinc-100 px-3 pt-4 pb-8">
+          <p className="truncate px-1 text-xs text-zinc-400 mb-2">{user.email}</p>
+          <SignOutButton />
         </div>
       </aside>
 
