@@ -3,11 +3,20 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getWorkspaceId } from "@/lib/workspace";
 import { db } from "@/lib/db";
+import { NotesSection } from "@/components/notes-section";
 import type { DealStage } from "@prisma/client";
 
 // ---------------------------------------------------------------------------
 // Data
 // ---------------------------------------------------------------------------
+
+async function getNotes(dealId: string, workspaceId: string) {
+  return db.note.findMany({
+    where: { dealId, workspaceId },
+    orderBy: { date: "desc" },
+    select: { id: true, type: true, date: true, body: true, createdAt: true },
+  });
+}
 
 async function getDeal(id: string, workspaceId: string) {
   return db.deal.findFirst({
@@ -163,7 +172,10 @@ export default async function DealDetailPage({
 
   const { id } = await params;
   const workspaceId = await getWorkspaceId(user.id);
-  const deal = await getDeal(id, workspaceId);
+  const [deal, notes] = await Promise.all([
+    getDeal(id, workspaceId),
+    getNotes(id, workspaceId),
+  ]);
 
   if (!deal) return <NotFound />;
 
@@ -237,7 +249,18 @@ export default async function DealDetailPage({
           <DetailRow label="Updated">{formatDate(deal.updatedAt)}</DetailRow>
         </Section>
 
-        <PlaceholderSection title="Notes" />
+        <Section title="Notes">
+          <NotesSection
+            notes={notes.map((n) => ({
+              ...n,
+              date: n.date.toISOString(),
+              createdAt: n.createdAt.toISOString(),
+            }))}
+            counterpartyId={deal.counterparty.id}
+            dealId={id}
+            redirectTo={`/deals/${id}`}
+          />
+        </Section>
         <PlaceholderSection title="Tasks" />
       </div>
     </div>

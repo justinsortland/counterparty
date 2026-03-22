@@ -66,3 +66,8 @@
 - [x] Choose tech stack (Next.js 16 + Supabase + Prisma + shadcn/ui)
 - [x] Finalize auth (Supabase Auth), ownership model (Workspace), and V1 design decisions
 - [x] Write PRD, Architecture, Tasks
+- [x] Phase 0: Next.js scaffold, Tailwind, shadcn/ui, Prisma, Supabase Auth, workspace bootstrap, dashboard shell
+- [x] Phase 1: Counterparty list, create, detail; contact list, create
+- [x] Phase 2: Deal list, create, detail
+- [x] Phase 4 (partial): Dashboard overview with stat cards, recent counterparties, deals by follow-up
+- [x] Phase 3 (partial): Note create form and timeline on counterparty and deal pages

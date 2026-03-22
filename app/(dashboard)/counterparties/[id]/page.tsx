@@ -4,11 +4,20 @@ import { createClient } from "@/lib/supabase/server";
 import { getWorkspaceId } from "@/lib/workspace";
 import { db } from "@/lib/db";
 import { buttonVariants } from "@/lib/button-variants";
+import { NotesSection } from "@/components/notes-section";
 import type { CounterpartyStatus, CounterpartyType } from "@prisma/client";
 
 // ---------------------------------------------------------------------------
 // Data
 // ---------------------------------------------------------------------------
+
+async function getNotes(counterpartyId: string, workspaceId: string) {
+  return db.note.findMany({
+    where: { counterpartyId, workspaceId, dealId: null },
+    orderBy: { date: "desc" },
+    select: { id: true, type: true, date: true, body: true, createdAt: true },
+  });
+}
 
 async function getContacts(counterpartyId: string, workspaceId: string) {
   return db.contact.findMany({
@@ -280,9 +289,10 @@ export default async function CounterpartyDetailPage({
 
   const { id } = await params;
   const workspaceId = await getWorkspaceId(user.id);
-  const [counterparty, contacts] = await Promise.all([
+  const [counterparty, contacts, notes] = await Promise.all([
     getCounterparty(id, workspaceId),
     getContacts(id, workspaceId),
+    getNotes(id, workspaceId),
   ]);
 
   if (!counterparty) return <NotFound />;
@@ -353,6 +363,19 @@ export default async function CounterpartyDetailPage({
 
         {/* Contacts */}
         <ContactsSection contacts={contacts} counterpartyId={id} />
+
+        {/* Notes */}
+        <Section title="Notes">
+          <NotesSection
+            notes={notes.map((n) => ({
+              ...n,
+              date: n.date.toISOString(),
+              createdAt: n.createdAt.toISOString(),
+            }))}
+            counterpartyId={id}
+            redirectTo={`/counterparties/${id}`}
+          />
+        </Section>
 
         {/* Deals — placeholder until Phase 2 */}
         <PlaceholderSection title="Deals" />
