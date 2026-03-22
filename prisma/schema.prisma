@@ -1,0 +1,242 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum CounterpartyType {
+  COMPANY
+  FUND
+  VENDOR
+  CLIENT
+  RECRUITER
+  INDIVIDUAL
+}
+
+enum CounterpartyStatus {
+  ACTIVE
+  WATCH
+  INACTIVE
+}
+
+enum DealStage {
+  PROSPECT
+  ACTIVE
+  DILIGENCE
+  CLOSED_WON
+  CLOSED_LOST
+  PAUSED
+}
+
+enum NoteType {
+  MEETING
+  CALL
+  EMAIL
+  MESSAGE
+  OTHER
+}
+
+enum WorkspaceRole {
+  OWNER
+  MEMBER
+  VIEWER
+}
+
+enum EntityType {
+  COUNTERPARTY
+  DEAL
+  CONTACT
+  NOTE
+  TASK
+}
+
+// ---------------------------------------------------------------------------
+// Workspace + User + Membership
+// ---------------------------------------------------------------------------
+
+model Workspace {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members        WorkspaceMember[]
+  counterparties Counterparty[]
+  contacts       Contact[]
+  deals          Deal[]
+  notes          Note[]
+  tasks          Task[]
+  activityLogs   ActivityLog[]
+
+  @@map("workspaces")
+}
+
+model User {
+  id        String   @id // Supabase auth.users UUID — set explicitly, no default
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+
+  workspaces WorkspaceMember[]
+
+  @@map("users")
+}
+
+model WorkspaceMember {
+  id          String        @id @default(cuid())
+  workspaceId String
+  userId      String
+  role        WorkspaceRole @default(OWNER)
+  createdAt   DateTime      @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@unique([workspaceId, userId])
+  @@index([workspaceId])
+  @@map("workspace_members")
+}
+
+// ---------------------------------------------------------------------------
+// Core entities
+// ---------------------------------------------------------------------------
+
+model Counterparty {
+  id             String             @id @default(cuid())
+  workspaceId    String
+  name           String
+  type           CounterpartyType
+  status         CounterpartyStatus @default(ACTIVE)
+  website        String?
+  description    String?
+  tags           String[]
+  lastActivityAt DateTime?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  workspace    Workspace     @relation(fields: [workspaceId], references: [id])
+  contacts     Contact[]
+  deals        Deal[]
+  notes        Note[]
+  tasks        Task[]
+  activityLogs ActivityLog[]
+
+  @@index([workspaceId])
+  @@map("counterparties")
+}
+
+model Contact {
+  id             String   @id @default(cuid())
+  workspaceId    String
+  counterpartyId String
+  name           String
+  title          String?
+  email          String?
+  phone          String?
+  linkedinUrl    String?
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  workspace    Workspace    @relation(fields: [workspaceId], references: [id])
+  counterparty Counterparty @relation(fields: [counterpartyId], references: [id])
+
+  @@index([workspaceId])
+  @@index([counterpartyId])
+  @@map("contacts")
+}
+
+model Deal {
+  id             String    @id @default(cuid())
+  workspaceId    String
+  counterpartyId String
+  name           String
+  type           String?
+  stage          DealStage @default(PROSPECT)
+  value          Float?
+  currency       String?   @default("USD")
+  nextFollowUpAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  workspace    Workspace    @relation(fields: [workspaceId], references: [id])
+  counterparty Counterparty @relation(fields: [counterpartyId], references: [id])
+  notes        Note[]
+  tasks        Task[]
+
+  @@index([workspaceId])
+  @@index([counterpartyId])
+  @@map("deals")
+}
+
+model Note {
+  id             String   @id @default(cuid())
+  workspaceId    String
+  counterpartyId String
+  dealId         String?
+  contactId      String?
+  type           NoteType
+  date           DateTime
+  body           String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  workspace    Workspace    @relation(fields: [workspaceId], references: [id])
+  counterparty Counterparty @relation(fields: [counterpartyId], references: [id])
+  deal         Deal?        @relation(fields: [dealId], references: [id])
+
+  @@index([workspaceId])
+  @@index([counterpartyId])
+  @@map("notes")
+}
+
+model Task {
+  id             String    @id @default(cuid())
+  workspaceId    String
+  counterpartyId String
+  dealId         String?
+  contactId      String?
+  title          String
+  dueAt          DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  workspace    Workspace    @relation(fields: [workspaceId], references: [id])
+  counterparty Counterparty @relation(fields: [counterpartyId], references: [id])
+  deal         Deal?        @relation(fields: [dealId], references: [id])
+
+  @@index([workspaceId])
+  @@index([counterpartyId])
+  @@map("tasks")
+}
+
+// ---------------------------------------------------------------------------
+// Activity log — append-only, no updatedAt
+// ---------------------------------------------------------------------------
+
+model ActivityLog {
+  id             String     @id @default(cuid())
+  workspaceId    String
+  counterpartyId String?
+  entityType     EntityType
+  entityId       String
+  action         String
+  metadata       Json?
+  createdAt      DateTime   @default(now())
+
+  workspace    Workspace     @relation(fields: [workspaceId], references: [id])
+  counterparty Counterparty? @relation(fields: [counterpartyId], references: [id])
+
+  @@index([workspaceId])
+  @@index([entityType, entityId])
+  @@map("activity_logs")
+}
