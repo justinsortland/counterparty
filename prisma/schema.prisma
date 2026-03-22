@@ -12,50 +12,49 @@ datasource db {
 // Enums
 // ---------------------------------------------------------------------------
 
-enum CounterpartyType {
-  COMPANY
-  FUND
-  VENDOR
-  CLIENT
-  RECRUITER
-  INDIVIDUAL
-}
-
-enum CounterpartyStatus {
-  ACTIVE
-  WATCH
-  INACTIVE
-}
-
-enum DealStage {
-  PROSPECT
-  ACTIVE
-  DILIGENCE
-  CLOSED_WON
-  CLOSED_LOST
-  PAUSED
-}
-
-enum NoteType {
-  MEETING
-  CALL
-  EMAIL
-  MESSAGE
-  OTHER
-}
-
 enum WorkspaceRole {
   OWNER
   MEMBER
   VIEWER
 }
 
-enum EntityType {
-  COUNTERPARTY
-  DEAL
-  CONTACT
-  NOTE
-  TASK
+enum SubmissionStatus {
+  DRAFT
+  REVIEWED
+  NEEDS_REVISION
+}
+
+enum PermitType {
+  BUILDING
+  ELECTRICAL
+  PLUMBING
+  MECHANICAL
+  ZONING
+  GRADING
+}
+
+enum ProjectType {
+  REMODEL
+  ADDITION
+  ADU
+  NEW_CONSTRUCTION
+  DECK_PATIO
+  FENCE_WALL
+  POOL
+  DEMOLITION
+  OTHER
+}
+
+enum ReviewVerdict {
+  LIKELY_APPROVE
+  CONDITIONAL
+  LIKELY_REJECT
+}
+
+enum IssueSeverity {
+  CRITICAL
+  MAJOR
+  MINOR
 }
 
 // ---------------------------------------------------------------------------
@@ -68,13 +67,9 @@ model Workspace {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  members        WorkspaceMember[]
-  counterparties Counterparty[]
-  contacts       Contact[]
-  deals          Deal[]
-  notes          Note[]
-  tasks          Task[]
-  activityLogs   ActivityLog[]
+  members     WorkspaceMember[]
+  submissions Submission[]
+  reviews     Review[]
 
   @@map("workspaces")
 }
@@ -109,134 +104,81 @@ model WorkspaceMember {
 // Core entities
 // ---------------------------------------------------------------------------
 
-model Counterparty {
-  id             String             @id @default(cuid())
-  workspaceId    String
-  name           String
-  type           CounterpartyType
-  status         CounterpartyStatus @default(ACTIVE)
-  website        String?
-  description    String?
-  tags           String[]
-  lastActivityAt DateTime?
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
+model Submission {
+  id            String           @id @default(cuid())
+  workspaceId   String
+  title         String
+  address       String
+  jurisdiction  String
+  permitType    PermitType
+  projectType   ProjectType
+  scopeOfWork   String
+  reviewContext String?          // optional: prior objections, focus areas, extra context for the reviewer
+  status        SubmissionStatus @default(DRAFT)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
 
-  workspace    Workspace     @relation(fields: [workspaceId], references: [id])
-  contacts     Contact[]
-  deals        Deal[]
-  notes        Note[]
-  tasks        Task[]
-  activityLogs ActivityLog[]
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
+  reviews   Review[]
 
   @@index([workspaceId])
-  @@map("counterparties")
-}
-
-model Contact {
-  id             String   @id @default(cuid())
-  workspaceId    String
-  counterpartyId String
-  name           String
-  title          String?
-  email          String?
-  phone          String?
-  linkedinUrl    String?
-  notes          String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  workspace    Workspace    @relation(fields: [workspaceId], references: [id])
-  counterparty Counterparty @relation(fields: [counterpartyId], references: [id])
-
-  @@index([workspaceId])
-  @@index([counterpartyId])
-  @@map("contacts")
-}
-
-model Deal {
-  id             String    @id @default(cuid())
-  workspaceId    String
-  counterpartyId String
-  name           String
-  type           String?
-  stage          DealStage @default(PROSPECT)
-  value          Float?
-  currency       String?   @default("USD")
-  nextFollowUpAt DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-
-  workspace    Workspace    @relation(fields: [workspaceId], references: [id])
-  counterparty Counterparty @relation(fields: [counterpartyId], references: [id])
-  notes        Note[]
-  tasks        Task[]
-
-  @@index([workspaceId])
-  @@index([counterpartyId])
-  @@map("deals")
-}
-
-model Note {
-  id             String   @id @default(cuid())
-  workspaceId    String
-  counterpartyId String
-  dealId         String?
-  contactId      String?
-  type           NoteType
-  date           DateTime
-  body           String
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  workspace    Workspace    @relation(fields: [workspaceId], references: [id])
-  counterparty Counterparty @relation(fields: [counterpartyId], references: [id])
-  deal         Deal?        @relation(fields: [dealId], references: [id])
-
-  @@index([workspaceId])
-  @@index([counterpartyId])
-  @@map("notes")
-}
-
-model Task {
-  id             String    @id @default(cuid())
-  workspaceId    String
-  counterpartyId String
-  dealId         String?
-  contactId      String?
-  title          String
-  dueAt          DateTime?
-  completedAt    DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-
-  workspace    Workspace    @relation(fields: [workspaceId], references: [id])
-  counterparty Counterparty @relation(fields: [counterpartyId], references: [id])
-  deal         Deal?        @relation(fields: [dealId], references: [id])
-
-  @@index([workspaceId])
-  @@index([counterpartyId])
-  @@map("tasks")
+  @@index([workspaceId, status])
+  @@map("submissions")
 }
 
 // ---------------------------------------------------------------------------
-// Activity log — append-only, no updatedAt
+// Reviews — append-only, no updatedAt
 // ---------------------------------------------------------------------------
 
-model ActivityLog {
-  id             String     @id @default(cuid())
+model Review {
+  id             String @id @default(cuid())
   workspaceId    String
-  counterpartyId String?
-  entityType     EntityType
-  entityId       String
-  action         String
-  metadata       Json?
-  createdAt      DateTime   @default(now())
+  submissionId   String
+  revisionNumber Int
 
-  workspace    Workspace     @relation(fields: [workspaceId], references: [id])
-  counterparty Counterparty? @relation(fields: [counterpartyId], references: [id])
+  // Snapshot of submission state at review time
+  snapshotTitle         String
+  snapshotScopeOfWork   String
+  snapshotJurisdiction  String
+  snapshotPermitType    PermitType
+  snapshotProjectType   ProjectType
+  snapshotReviewContext String?
+  snapshotArtifacts     String[]   // empty for V1; document refs in V2
 
+  // AI provenance
+  modelVersion  String
+  promptVersion String
+
+  // Full structured output from the model, verbatim
+  rawPayload Json
+
+  // Parsed fields (promoted for display and querying)
+  verdict     ReviewVerdict
+  summary     String
+  missingDocs String[]
+
+  createdAt DateTime @default(now())
+
+  workspace  Workspace     @relation(fields: [workspaceId], references: [id])
+  submission Submission    @relation(fields: [submissionId], references: [id])
+  issues     ReviewIssue[]
+
+  @@unique([submissionId, revisionNumber])
   @@index([workspaceId])
-  @@index([entityType, entityId])
-  @@map("activity_logs")
+  @@index([submissionId])
+  @@map("reviews")
+}
+
+model ReviewIssue {
+  id            String        @id @default(cuid())
+  reviewId      String
+  severity      IssueSeverity
+  category      String
+  description   String
+  codeReference String?
+
+  review Review @relation(fields: [reviewId], references: [id])
+
+  @@index([reviewId])
+  @@map("review_issues")
 }
