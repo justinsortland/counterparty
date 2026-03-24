@@ -2,31 +2,40 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
-import { createSubmission, type CreateSubmissionState } from "./actions";
+import { updateSubmission, type UpdateSubmissionState } from "./actions";
 import { buttonVariants } from "@/lib/button-variants";
-import { SubmissionFields } from "../_components/submission-fields";
+import {
+  SubmissionFields,
+  type SubmissionDefaultValues,
+} from "../../_components/submission-fields";
 
-export function SubmissionForm() {
+export function EditSubmissionForm({
+  submission,
+}: {
+  submission: SubmissionDefaultValues & { id: string };
+}) {
   const [state, formAction, isPending] = useActionState<
-    CreateSubmissionState,
+    UpdateSubmissionState,
     FormData
-  >(createSubmission, null);
+  >(updateSubmission, null);
 
   const errors = state?.errors ?? {};
 
   return (
     <form action={formAction} className="space-y-5">
+      <input type="hidden" name="submissionId" value={submission.id} />
+
       {errors.form && (
         <p className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
           {errors.form}
         </p>
       )}
 
-      <SubmissionFields errors={errors} />
+      <SubmissionFields defaultValues={submission} errors={errors} />
 
       <div className="flex items-center justify-end gap-3 pt-2">
         <Link
-          href="/submissions"
+          href={`/submissions/${submission.id}`}
           className={buttonVariants({ variant: "ghost", size: "sm" })}
         >
           Cancel
@@ -36,7 +45,7 @@ export function SubmissionForm() {
           disabled={isPending}
           className={buttonVariants({ size: "sm" })}
         >
-          {isPending ? "Creating…" : "Create submission"}
+          {isPending ? "Saving…" : "Save changes"}
         </button>
       </div>
     </form>

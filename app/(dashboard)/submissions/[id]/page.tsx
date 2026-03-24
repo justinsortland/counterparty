@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getWorkspaceId } from "@/lib/workspace";
 import { db } from "@/lib/db";
 import { requestReview } from "@/lib/actions/review";
+import { buttonVariants } from "@/lib/button-variants";
 import type { PermitType, ProjectType, SubmissionStatus, ReviewVerdict, IssueSeverity } from "@prisma/client";
 
 // ---------------------------------------------------------------------------
@@ -94,6 +95,12 @@ const VERDICT_STYLES: Record<ReviewVerdict, string> = {
   LIKELY_REJECT: "bg-red-50 text-red-700",
 };
 
+const VERDICT_BORDER: Record<ReviewVerdict, string> = {
+  LIKELY_APPROVE: "border-l-green-300",
+  CONDITIONAL: "border-l-amber-300",
+  LIKELY_REJECT: "border-l-red-300",
+};
+
 const VERDICT_LABELS: Record<ReviewVerdict, string> = {
   LIKELY_APPROVE: "Likely Approve",
   CONDITIONAL: "Conditional",
@@ -160,18 +167,20 @@ function ReviewCard({ review }: { review: ReviewRecord }) {
   return (
     <div className="py-5 border-b border-zinc-100 last:border-0">
       {/* Review header */}
-      <div className="flex items-center gap-3 mb-3">
-        <span className="text-xs font-medium text-zinc-400">
-          Revision {review.revisionNumber}
-        </span>
-        <span
-          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${VERDICT_STYLES[review.verdict]}`}
-        >
-          {VERDICT_LABELS[review.verdict]}
-        </span>
-        <span className="ml-auto text-xs text-zinc-400">
-          {formatDate(review.createdAt)}
-        </span>
+      <div className={`border-l-2 pl-3 mb-3 ${VERDICT_BORDER[review.verdict]}`}>
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-semibold text-zinc-500">
+            Revision {review.revisionNumber}
+          </span>
+          <span
+            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${VERDICT_STYLES[review.verdict]}`}
+          >
+            {VERDICT_LABELS[review.verdict]}
+          </span>
+          <span className="ml-auto text-xs text-zinc-400">
+            {formatDate(review.createdAt)}
+          </span>
+        </div>
       </div>
 
       {/* Summary */}
@@ -312,17 +321,27 @@ export default async function SubmissionDetailPage({
         >
           ← Submissions
         </Link>
-        <div className="mt-2 flex items-center gap-2.5">
-          <h1 className="text-lg font-semibold text-zinc-900">
-            {submission.title}
-          </h1>
-          <span
-            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[submission.status]}`}
+        <div className="mt-2 flex items-start justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-lg font-semibold text-zinc-900">
+                {submission.title}
+              </h1>
+              <span
+                className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[submission.status]}`}
+              >
+                {STATUS_LABELS[submission.status]}
+              </span>
+            </div>
+            <p className="mt-1 text-sm text-zinc-400">{submission.address}</p>
+          </div>
+          <Link
+            href={`/submissions/${submission.id}/edit`}
+            className={buttonVariants({ variant: "ghost", size: "sm" })}
           >
-            {STATUS_LABELS[submission.status]}
-          </span>
+            Edit
+          </Link>
         </div>
-        <p className="mt-1 text-sm text-zinc-400">{submission.address}</p>
       </div>
 
       <div className="flex flex-col gap-4 max-w-2xl">
