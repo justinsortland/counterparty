@@ -1,73 +1,62 @@
 # Tasks — Counterparty
 
-## Phase 0 — Foundation
+## Phase 0 — Migration from CRM shell
 
-- [ ] Initialize Next.js 16 project (App Router, TypeScript)
-- [ ] Set up Tailwind CSS + shadcn/ui
-- [ ] Set up Supabase project (Postgres + Auth enabled)
-- [ ] Set up Supabase Auth: sign in, sign up, session middleware, redirect logic
-- [ ] Create Workspace + User + WorkspaceMember on first sign-in (server action)
-- [ ] Set up Prisma with initial schema (all core entities + workspace ownership)
-- [ ] Run first migration against Supabase
-- [ ] Deploy skeleton to Vercel (env vars wired)
+- [ ] Delete CRM routes: `/counterparties/**`, `/deals/**`
+- [ ] Delete CRM components: `notes-section.tsx`
+- [ ] Delete CRM server actions: `lib/actions/notes.ts`
+- [ ] Update `components/nav-links.tsx`: replace CRM links with Submissions
+- [ ] Update Prisma schema: drop CRM models and enums, add new models
+- [ ] Run Prisma migration (destructive reset — dev only, no production data)
+- [ ] Rewrite dashboard page shell (remove CRM stat cards, placeholder for new stats)
 
-## Phase 1 — Counterparties + Contacts
+## Phase 1 — Submissions CRUD
 
-- [ ] Counterparty list page (table with type, status, last activity)
-- [ ] Counterparty create/edit form
-- [ ] Counterparty detail page (shell with tabs: contacts, deals, notes, tasks)
-- [ ] Contact create/edit form (linked to counterparty)
-- [ ] Contact list within counterparty detail
+- [ ] Submission list page (`/submissions`): table with title, permit type, project type, status, latest verdict, date
+- [ ] New submission form (`/submissions/new`): title, address, jurisdiction, permit type, project type, scope of work
+- [ ] Create submission server action (`lib/actions/submissions.ts`)
+- [ ] Submission detail page (`/submissions/[id]`): scope of work display, status badge, review history section (placeholder)
+- [ ] Edit scope of work: inline edit or edit page for scope of work field
 
-## Phase 2 — Deals
+## Phase 2 — AI Review Engine
 
-- [ ] Deal list page (table with stage, counterparty, follow-up date)
-- [ ] Deal create/edit form (linked to counterparty)
-- [ ] Deal detail page (notes, tasks, activity)
-- [ ] Stage update (quick-select on list and detail)
-- [ ] Next follow-up date field with visual indicator (overdue, upcoming, not set)
+- [ ] Install `@anthropic-ai/sdk`, add `ANTHROPIC_API_KEY` to env
+- [ ] Write `lib/ai/reviewer.ts`: build prompt, call Claude, parse structured JSON response
+- [ ] Write `lib/actions/review.ts` server action: validate submission, call reviewer, persist Review + ReviewIssues in transaction, update submission status
+- [ ] "Request Review" button on submission detail page
+- [ ] Display review result: verdict badge, summary text, issues grouped by severity (Critical → Major → Minor), missing docs list
+- [ ] Review history: all past reviews shown in reverse order with revision number and date
 
-## Phase 3 — Notes + Tasks
+## Phase 3 — Dashboard
 
-- [ ] Note create form (type, date, body) on counterparty and deal pages
-- [ ] Note timeline view per counterparty
-- [ ] Task create form with due date
-- [ ] Task complete/uncomplete toggle
-- [ ] Task list per counterparty and deal
+- [ ] Stat cards: total submissions, submissions needing revision (NEEDS_REVISION), critical issues flagged across all active submissions
+- [ ] Recent submissions table: title, latest verdict, status, last updated
+- [ ] Empty state: prompt to create first submission
 
-## Phase 4 — Dashboard + Search
+## Phase 4 — Polish
 
-- [ ] Dashboard: active deals count, overdue tasks list, stale counterparties list
-- [ ] Global search (counterparties, deals, contacts)
-- [ ] Counterparty list filters (type, status, tag)
-- [ ] Deal list filters (stage, counterparty)
-
-## Phase 5 — Polish + Hardening
-
-- [ ] Activity log: auto-record creates, stage changes, note additions
+- [ ] Loading states on review request (button disabled + spinner while AI call is in flight)
+- [ ] Error state if AI review fails (user-facing message, retry available)
+- [ ] Disclaimer on all review output: "AI-generated review — citations are approximate. Verify requirements with your local authority."
 - [ ] Empty states for all list views
-- [ ] Loading and error states
-- [ ] Responsive layout (readable on smaller screens)
-- [ ] Basic input validation and error handling
-- [ ] Seed script for local development
+- [ ] Submission status transitions: auto-update status based on verdict (REVIEWED → NEEDS_REVISION if any CRITICAL issues)
+- [ ] Responsive layout
 
 ## Backlog (V2+)
 
-- [ ] Team/org support with RLS
-- [ ] Email/calendar sync
-- [ ] Kanban pipeline view for deals
-- [ ] Reminders and notifications
-- [ ] CSV import/export
-- [ ] Document attachments
+- [ ] File and PDF uploads (plans, photos, specs) — AI reviews actual documents
+- [ ] Jurisdiction-specific checklists (pre-load known local requirements)
+- [ ] Export review summary as PDF
+- [ ] Team/workspace access for multiple users
+- [ ] Saved scope of work templates for common project types
+- [ ] Hyperlinked code references
+- [ ] API access for permit expediters
 
 ## Done
 
-- [x] Define project direction and product brief
-- [x] Choose tech stack (Next.js 16 + Supabase + Prisma + shadcn/ui)
-- [x] Finalize auth (Supabase Auth), ownership model (Workspace), and V1 design decisions
-- [x] Write PRD, Architecture, Tasks
-- [x] Phase 0: Next.js scaffold, Tailwind, shadcn/ui, Prisma, Supabase Auth, workspace bootstrap, dashboard shell
-- [x] Phase 1: Counterparty list, create, detail; contact list, create
-- [x] Phase 2: Deal list, create, detail
-- [x] Phase 4 (partial): Dashboard overview with stat cards, recent counterparties, deals by follow-up
-- [x] Phase 3 (partial): Note create form and timeline on counterparty and deal pages
+- [x] Next.js 16 scaffold, Tailwind, shadcn/ui, Prisma, Supabase Auth
+- [x] Workspace + User + WorkspaceMember bootstrap on signup
+- [x] Dashboard shell with sidebar nav, sign-out
+- [x] Supabase Auth SSR: login, signup, middleware, callback
+- [x] Rewrite product direction: CRM → permit review AI simulator
+- [x] Rewrite PRD, Architecture, Tasks for new direction

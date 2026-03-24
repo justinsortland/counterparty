@@ -2,108 +2,113 @@
 
 ## Problem
 
-External relationship management is fragmented. Analysts, founders, investors, and operators track counterparties across spreadsheets, Notion docs, scattered notes, and email threads. The result: statuses go stale, follow-ups get missed, and there is no single structured view of where a relationship or deal stands.
+Getting a residential permit is opaque and adversarial. Most homeowners and small contractors don't know what plan checkers are looking for. First submissions routinely get rejected for missing documents, code violations, or incomplete scope descriptions. Multiple trips to city hall add weeks to a project and real money in delays.
 
-Existing tools are either too generic (Notion, spreadsheets), too heavy (Salesforce, DealCloud), or not designed for individual operators managing a mixed portfolio of relationships (investors, vendors, clients, recruits, partners).
+There is no low-cost way to pressure-test a permit application before submitting it. The counterparty — the permitting authority — holds all the information about what they want, and they only reveal it by rejecting you.
+
+## Concept
+
+Counterparty is an AI-powered permit review simulator for residential construction and renovation. The name is intentional: the permitting authority is literally the counterparty in your project. Counterparty puts you on the other side of that table before you show up at city hall.
+
+Users describe their project — scope of work, address, permit type, jurisdiction. The AI plays the role of a residential plan checker and reviews the submission: flagging likely rejection points, identifying missing documentation, citing relevant code sections, and giving an overall verdict. Users can revise and re-request a review until the submission looks clean.
 
 ## Goals
 
-- Give a single operator (or small team) one place to manage all external relationships and deals
-- Surface what needs attention: stale counterparties, overdue follow-ups, open tasks
-- Make it fast to log an interaction and fast to get a status snapshot
-- Feel professional and structured, not like a hacked-together spreadsheet
+- Let users simulate the permit review process before submitting to the real authority
+- Surface likely rejection points and missing documentation before it costs time
+- Educate users on what plan checkers actually evaluate
+- Build confidence for the real submission
 
 ## Non-Goals (V1)
 
-- No contract signing or document workflow
-- No real-time collaboration or live cursors
-- No risk/exposure engine or portfolio analytics
-- No public marketplace or directory
-- No heavy document storage or PDF management
-- No email/calendar integration (V2+)
+- No actual permit submission or filing with any authority
+- No file or PDF upload (V2)
+- No jurisdiction database or code book — AI cites codes from training knowledge
+- No collaboration or team access
+- No notifications or reminders
 - No mobile app
 
 ## Users
 
-**Primary:** Individual operators — analysts, founders, investors, recruiters — who manage 10–200 ongoing external relationships and need a structured, low-friction system.
+**Primary:** Homeowners planning a renovation or addition, and small residential contractors managing permit applications on behalf of clients.
 
-**Future:** Small teams (2–10) sharing a counterparty book. The data model uses a Workspace ownership layer from day one — team support requires no entity schema changes, only adding members and RLS policies.
+**Secondary (V2):** Permit expediters, architects, and small design-build firms who submit many permits and want to pre-screen submissions before paying their staff to go to the counter.
 
 ## Core Entities
 
 | Entity | Description |
 |--------|-------------|
-| Counterparty | A company, fund, vendor, client, or individual you have an ongoing relationship with |
-| Contact | A person at or associated with a counterparty |
-| Deal | An opportunity, engagement, or initiative linked to a counterparty |
-| Note | A logged interaction: meeting, call, email, or memo |
-| Task | A follow-up action with a due date |
-| Activity Log | Auto-generated audit trail of changes and events |
+| Submission | A permit application packet: one project, one jurisdiction, one scope of work |
+| Review | An AI-generated review of a submission (append-only; one per review request) |
+| ReviewIssue | A specific flag within a review: severity, category, description, optional code cite |
 
 ## MVP Features
 
-### Counterparties
-- Create, edit, archive counterparties
-- Fields: name, type (company/fund/vendor/client/recruiter/individual), status (active/watch/inactive), website, tags, description
-- View all contacts, deals, notes, and tasks linked to a counterparty
+### Submissions
+- Create a submission with: title, address, jurisdiction (free text), permit type, project type, scope of work (plain text)
+- Edit scope of work before requesting a review
+- List all submissions with status and latest verdict
+- Submission statuses: Draft, Pending Review, Reviewed, Needs Revision
 
-### Contacts
-- Add contacts linked to a counterparty
-- Fields: name, title, email, phone, LinkedIn URL, notes
-
-### Deals
-- Create deals linked to a counterparty
-- Fields: name, type, stage (prospect → active → diligence → closed won/lost/paused), value (optional), next follow-up date, notes
-- Update stage and follow-up date quickly
-
-### Notes
-- Log a note against a counterparty, deal, or contact
-- Fields: type (meeting/call/email/message/other), date, body (rich text or plain)
-- Shown in chronological timeline per counterparty
-
-### Tasks
-- Create tasks linked to a counterparty or deal
-- Fields: title, due date, done/not done
-- Surface overdue and upcoming tasks in the dashboard
+### AI Review
+- Request a review from the submission detail page
+- AI acts as a residential plan checker for the given jurisdiction
+- Returns: overall verdict (Likely Approve / Conditional / Likely Reject), 1–3 sentence summary, list of issues, list of missing documents
+- Issues include: severity (Critical / Major / Minor), category (e.g., "Egress", "Setback"), description, optional code reference
+- Each review request creates a new Review with an incremented revision number
+- Full review history shown on the submission detail page
 
 ### Dashboard
-- Summary view: active deals, overdue tasks, stale counterparties (no activity in X days)
-- Quick-add for counterparties, notes, tasks
-
-### Search & Filter
-- Global search across counterparties, contacts, deals
-- Filter counterparty list by type, status, tag
-- Filter deal list by stage, counterparty
+- Count of active submissions, submissions needing revision, critical issues flagged
+- Table of recent submissions with latest verdict
 
 ## Future Features (V2+)
 
-- Team access with role-based permissions
-- Email / calendar sync (log interactions automatically)
-- Pipeline board view (kanban for deals)
-- Reminders and notifications
-- CSV import/export
-- Document attachments
-- API / webhook support
-- Mobile-optimized view
+- File and PDF uploads (plans, photos, specs) — AI reviews the actual documents
+- Jurisdiction database: pre-load known local requirements by city/county
+- Code book references: hyperlinked to actual building code sections
+- Checklist templates per permit type and jurisdiction
+- Export review summary as PDF (for use in real submission cover letter)
+- Team access (multiple users per workspace)
+- Saved scope of work templates for common project types
+- API access for permit expediters building their own workflows
+
+## Permit Types (V1)
+
+- Building (general construction)
+- Electrical
+- Plumbing
+- Mechanical (HVAC)
+- Zoning / Land Use
+- Grading / Drainage
+
+## Project Types (V1)
+
+- Kitchen or Bath Remodel
+- Room Addition
+- ADU (Accessory Dwelling Unit)
+- Deck or Patio
+- Fence or Retaining Wall
+- Pool or Spa
+- New Construction
+- Demolition
+- Other
 
 ## Constraints
 
 - Single developer building MVP
-- Start as internal-style tool, with productization path
-- No budget for paid infrastructure until it proves value
-- Supabase free tier + Vercel hobby tier should cover MVP comfortably
+- No budget for paid infrastructure until value is proven
+- Supabase free tier + Vercel hobby tier + Anthropic API covers MVP
+- Text-only submissions in V1 — no file storage
 
 ## Resolved Decisions
 
 | Decision | Choice |
 |----------|--------|
-| Auth | Supabase Auth (no Clerk) |
-| Ownership | Workspace model from day one; 1 user = 1 workspace for MVP |
-| Tags | Freeform strings |
-| Stale threshold | Hardcoded 30 days |
-| Note body | Plain textarea, no rich text editor |
-
-## Open Questions
-
-- Should deal value be required or fully optional? (Currently optional — keep?)
-- Should the activity log be user-visible or internal-only for V1?
+| Auth | Supabase Auth — unchanged from prior version |
+| Ownership | Workspace model — unchanged; 1 user = 1 workspace for MVP |
+| Scope of work input | Plain textarea, no rich text editor |
+| Jurisdiction | Free text field, no structured database |
+| AI model | Claude (haiku for cost, sonnet for quality — configurable) |
+| Review storage | Stored in DB (Review + ReviewIssue rows), not re-generated on load |
+| Code citations | Best-effort from AI training knowledge; explicitly not guaranteed accurate |

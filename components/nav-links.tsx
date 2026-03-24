@@ -6,9 +6,7 @@ import { cn } from "@/lib/utils";
 
 const links = [
   { label: "Dashboard", href: "/dashboard" },
-  { label: "Counterparties", href: "/counterparties" },
-  { label: "Deals", href: "/deals" },
-  { label: "Contacts", href: "/contacts" },
+  { label: "Submissions", href: "/submissions" },
 ];
 
 export function NavLinks() {

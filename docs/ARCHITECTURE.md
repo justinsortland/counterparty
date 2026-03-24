@@ -6,12 +6,11 @@
 |-------|--------|-----------|
 | Framework | Next.js 16 (App Router) | Full-stack, server components, productizable |
 | Database | Supabase (Postgres) | Relational model, RLS-ready for team support, generous free tier |
-| ORM | Prisma | Type-safe, strong DX for relational entity graph |
-| Auth | Supabase Auth | Already in stack, JWT integrates with Postgres RLS, no second service needed |
-| UI | shadcn/ui + Tailwind CSS | Polished components (tables, chips, modals) with full control |
+| ORM | Prisma | Type-safe, strong DX for relational model |
+| Auth | Supabase Auth | Already in stack, JWT integrates with Postgres RLS |
+| AI | Anthropic Claude API (`@anthropic-ai/sdk`) | Structured review output, best-in-class instruction following |
+| UI | shadcn/ui + Tailwind CSS | Polished components with full control |
 | Hosting | Vercel | Zero-config Next.js deploy |
-
-Clerk was considered but rejected for MVP: its main advantages (advanced org UI, pre-built team management) are not needed at this stage, and it adds an unnecessary external dependency when Supabase Auth covers the requirement.
 
 ## System Overview
 
@@ -20,166 +19,139 @@ Browser
   └── Next.js App (Vercel)
         ├── App Router (pages + layouts)
         ├── Server Components (data fetching via Prisma)
-        ├── Server Actions (mutations)
+        ├── Server Actions (mutations + AI review trigger)
         ├── Supabase Auth middleware (session validation)
-        └── Prisma Client
-              └── Supabase Postgres
+        ├── Prisma Client ──> Supabase Postgres
+        └── Anthropic SDK ──> Claude API
 ```
 
-Auth is handled entirely by Supabase Auth. Session cookies are validated in Next.js middleware. All DB access goes through Prisma. No separate backend service in V1.
+Auth is handled by Supabase Auth. Session cookies are validated in Next.js middleware. All DB access goes through Prisma. AI reviews are triggered from server actions, which call the Anthropic SDK and store structured results in Postgres.
 
 ## Ownership Model
 
-All core entities belong to a **Workspace**. For MVP, each user gets exactly one workspace created automatically at signup. This is the minimal change that makes future team support possible without a data migration.
+Unchanged from prior version. All entities belong to a **Workspace**.
 
 ```
-User ──< WorkspaceMember >── Workspace ──< [all entities]
+User ──< WorkspaceMember >── Workspace ──< [Submission, Review, ReviewIssue]
 ```
 
-For V1: 1 user, 1 workspace, automatic.
-For V2: add `WorkspaceMember` entries for additional users, add RLS policies — no entity schema changes.
+For V1: 1 user, 1 workspace, created automatically at signup.
+For V2: add `WorkspaceMember` entries, add RLS policies — no entity schema changes.
 
-**Ownership enforcement in V1** is done at the application layer: every Prisma query filters by `workspaceId` derived from the authenticated user's session. Supabase RLS is not enforced in V1 (Prisma uses the service role key which bypasses RLS), but will be added in V2 as a defense-in-depth layer.
+Ownership enforcement in V1 is at the application layer: every Prisma query filters by `workspaceId`.
 
-## Key Components
+## Key Files and Routes
 
-| Component | Description |
-|-----------|-------------|
-| `/app/(auth)` | Sign in / sign up pages (Supabase Auth UI) |
-| `/app/(dashboard)` | Main app shell: sidebar, nav, layout |
-| `/app/counterparties` | Counterparty list + detail pages |
-| `/app/deals` | Deal list + detail pages |
-| `/app/contacts` | Contact list + detail pages |
-| `/app/dashboard` | Home: active deals, overdue tasks, stale counterparties |
-| `/components/ui` | shadcn/ui components (table, badge, dialog, etc.) |
+| Path | Purpose |
+|------|---------|
+| `/app/(auth)` | Sign in / sign up pages (Supabase Auth) |
+| `/app/(dashboard)/layout.tsx` | Main shell: sidebar, nav, workspace bootstrap |
+| `/app/(dashboard)/dashboard` | Home: submission counts, critical issues, recent activity |
+| `/app/(dashboard)/submissions` | Submission list page |
+| `/app/(dashboard)/submissions/new` | Create submission form |
+| `/app/(dashboard)/submissions/[id]` | Submission detail: scope, review history, issue list |
 | `/lib/db.ts` | Prisma client singleton |
-| `/lib/auth.ts` | Supabase Auth server helpers (getUser, requireAuth) |
-| `/lib/actions` | Server actions for mutations |
+| `/lib/supabase/server.ts` | Supabase Auth server helpers |
+| `/lib/workspace.ts` | `getWorkspaceId(userId)` helper |
+| `/lib/bootstrap.ts` | Idempotent workspace creation on first login |
+| `/lib/actions/submissions.ts` | Server actions: create, update submission |
+| `/lib/actions/review.ts` | Server action: trigger AI review, parse, store |
+| `/lib/ai/reviewer.ts` | Claude API call + structured output parsing |
+| `/components/nav-links.tsx` | Sidebar nav (Dashboard, Submissions) |
 
 ## Data Model
 
-### Workspace
-```
-id          String    @id @default(cuid())
-name        String
-createdAt   DateTime  @default(now())
-updatedAt   DateTime  @updatedAt
-```
+### Workspace, User, WorkspaceMember
+Unchanged. See prior version or `prisma/schema.prisma`.
 
-### User
+### Submission
 ```
-id           String   @id  // matches Supabase auth.users.id (UUID)
-email        String   @unique
-name         String?
-createdAt    DateTime @default(now())
-```
-
-### WorkspaceMember (join — used for V2 team support, created at signup for V1)
-```
-id           String   @id @default(cuid())
-workspaceId  String
-userId       String
-role         Enum     // owner | member | viewer
-createdAt    DateTime @default(now())
-
-@@unique([workspaceId, userId])
-```
-
-### Counterparty
-```
-id              String    @id @default(cuid())
+id              String           @id @default(cuid())
 workspaceId     String
-name            String
-type            Enum      // company | fund | vendor | client | recruiter | individual
-status          Enum      // active | watch | inactive
-website         String?
-description     String?
-tags            String[]  // freeform strings
-lastActivityAt  DateTime?
-createdAt       DateTime  @default(now())
-updatedAt       DateTime  @updatedAt
+title           String           -- "Kitchen remodel at 123 Main St"
+address         String
+jurisdiction    String           -- "San Francisco, CA" (free text)
+permitType      PermitType
+projectType     ProjectType
+scopeOfWork     String           -- plain text, full description of proposed work
+status          SubmissionStatus @default(DRAFT)
+createdAt       DateTime         @default(now())
+updatedAt       DateTime         @updatedAt
 ```
 
-### Contact
+### Review (append-only)
 ```
-id               String   @id @default(cuid())
-workspaceId      String
-counterpartyId   String
-name             String
-title            String?
-email            String?
-phone            String?
-linkedinUrl      String?
-notes            String?
-createdAt        DateTime @default(now())
-updatedAt        DateTime @updatedAt
+id              String          @id @default(cuid())
+workspaceId     String
+submissionId    String
+revisionNumber  Int             -- 1, 2, 3… auto-incremented per submission
+verdict         ReviewVerdict
+summary         String          -- 1–3 sentence AI summary
+missingDocs     String[]        -- list of missing documentation items
+createdAt       DateTime        @default(now())
 ```
 
-### Deal
+### ReviewIssue
 ```
-id               String    @id @default(cuid())
-workspaceId      String
-counterpartyId   String
-name             String
-type             String?   // investment | partnership | vendor | job | other
-stage            Enum      // prospect | active | diligence | closed_won | closed_lost | paused
-value            Float?
-currency         String?   @default("USD")
-nextFollowUpAt   DateTime?
-createdAt        DateTime  @default(now())
-updatedAt        DateTime  @updatedAt
+id              String          @id @default(cuid())
+reviewId        String
+severity        IssueSeverity
+category        String          -- "Egress", "Setback", "Fire separation", etc.
+description     String          -- what the issue is and why it matters
+codeReference   String?         -- "CBC Section 1030.2" — best-effort, not guaranteed
 ```
 
-### Note
+### Enums
 ```
-id               String   @id @default(cuid())
-workspaceId      String
-counterpartyId   String
-dealId           String?
-contactId        String?
-type             Enum     // meeting | call | email | message | other
-date             DateTime
-body             String   // plain text, no rich text editor in V1
-createdAt        DateTime @default(now())
-updatedAt        DateTime @updatedAt
+SubmissionStatus  DRAFT | PENDING_REVIEW | REVIEWED | NEEDS_REVISION
+PermitType        BUILDING | ELECTRICAL | PLUMBING | MECHANICAL | ZONING | GRADING
+ProjectType       REMODEL | ADDITION | ADU | NEW_CONSTRUCTION | DECK_PATIO |
+                  FENCE_WALL | POOL | DEMOLITION | OTHER
+ReviewVerdict     LIKELY_APPROVE | CONDITIONAL | LIKELY_REJECT
+IssueSeverity     CRITICAL | MAJOR | MINOR
 ```
 
-### Task
-```
-id               String    @id @default(cuid())
-workspaceId      String
-counterpartyId   String
-dealId           String?
-contactId        String?
-title            String
-dueAt            DateTime?
-completedAt      DateTime?
-createdAt        DateTime  @default(now())
-updatedAt        DateTime  @updatedAt
-```
+## AI Review Engine
 
-### ActivityLog
-```
-id               String   @id @default(cuid())
-workspaceId      String
-entityType       String   // counterparty | deal | contact | note | task
-entityId         String
-action           String   // created | updated | stage_changed | note_added | task_completed
-metadata         Json?
-createdAt        DateTime @default(now())
-```
+### Flow
+1. User clicks "Request Review" on a submission detail page
+2. Server action reads the full `Submission` record
+3. Calls `lib/ai/reviewer.ts` with submission data
+4. `reviewer.ts` builds a structured prompt and calls Claude via `@anthropic-ai/sdk`
+5. Parses the JSON response into `{ verdict, summary, missingDocs, issues[] }`
+6. Creates one `Review` row + N `ReviewIssue` rows in a transaction
+7. Updates `submission.status` to `REVIEWED`
+8. Redirects to submission detail page (reviews are now loaded)
+
+### Prompt Strategy (V1)
+- System: "You are a residential building plan checker for {jurisdiction}. Review this permit application strictly and identify all likely issues a plan checker would raise. Respond only with valid JSON matching the schema provided."
+- User: structured block with permit type, project type, jurisdiction, and full scope of work
+- Response schema provided inline in the prompt as a JSON schema comment
+- Temperature: 0 (deterministic output for structured data)
+
+### Model Selection
+- Default: `claude-haiku-4-5-20251001` (fast, low cost, sufficient for structured review)
+- Configurable via env var `REVIEW_MODEL` for testing with stronger models
+
+### Parsing
+- Parse AI JSON response in `lib/ai/reviewer.ts`
+- If parsing fails: surface a user-facing error, do not create a broken review
+- No retry logic in V1 — if it fails, user can re-request
 
 ## V1 Design Decisions
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| Tags | Freeform `String[]` | Simpler to build; structured taxonomy is a V2 concern |
-| Stale threshold | Hardcoded 30 days | Configurable per-workspace is a V2 setting |
-| Note body | Plain `String` textarea | Rich text (Tiptap/Lexical) deferred to V2 |
-| Ownership enforcement | Application layer (Prisma `where: { workspaceId }`) | Supabase RLS added in V2 as defense-in-depth |
-| Mutations | Server Actions | Simpler than dedicated API routes for V1 scale |
+| AI output format | JSON with fixed schema | Structured issues are more useful than prose; easier to display |
+| Review storage | Persisted to DB | Avoid re-generating on every load; user can see history |
+| File uploads | Deferred to V2 | Avoids Supabase Storage setup; text-only is sufficient for V1 |
+| Jurisdiction | Free text | No city database to maintain; AI knows local context from training |
+| Code citations | Best-effort | Disclaimer shown in UI: citations are approximate, verify before submitting |
+| Mutations | Server Actions | Consistent with existing app patterns |
+| Ownership enforcement | Application layer (Prisma `where: { workspaceId }`) | Supabase RLS added in V2 |
 
 ## Open Questions
 
-- Full-text search: Postgres `tsvector` or client-side filter for MVP? (Client-side is fine until >500 records.)
-- Activity log: auto-generate in Server Actions (manual) or via Postgres trigger?
+- Should scope of work updates create a new Submission record or just mutate the existing one? (Current plan: mutate in place, revision number tracks review iterations.)
+- Should the "Request Review" button be disabled while a review is pending, or allow concurrent requests?
+- Should critical-severity issues block the submission status from advancing to "Reviewed"?
