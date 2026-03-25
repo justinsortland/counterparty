@@ -175,11 +175,12 @@ model Artifact {
   id           String   @id @default(cuid())
   workspaceId  String
   submissionId String
-  fileName     String
-  mimeType     String
-  sizeBytes    Int
-  storagePath  String
-  createdAt    DateTime @default(now())
+  fileName      String
+  mimeType      String
+  sizeBytes     Int
+  storagePath   String
+  documentLabel String?
+  createdAt     DateTime @default(now())
 
   workspace  Workspace  @relation(fields: [workspaceId], references: [id])
   submission Submission @relation(fields: [submissionId], references: [id])

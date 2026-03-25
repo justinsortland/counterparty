@@ -47,7 +47,7 @@ export async function requestReview(formData: FormData): Promise<void> {
         reviewContext: true,
         artifacts: {
           orderBy: { createdAt: "asc" },
-          select: { fileName: true, mimeType: true, sizeBytes: true },
+          select: { fileName: true, mimeType: true, sizeBytes: true, documentLabel: true },
         },
       },
     });
@@ -102,7 +102,12 @@ export async function requestReview(formData: FormData): Promise<void> {
           snapshotProjectType: submission.projectType,
           snapshotReviewContext: submission.reviewContext,
           snapshotArtifacts: submission.artifacts.map((a) =>
-            JSON.stringify({ fileName: a.fileName, mimeType: a.mimeType, sizeBytes: a.sizeBytes })
+            JSON.stringify({
+              fileName: a.fileName,
+              mimeType: a.mimeType,
+              sizeBytes: a.sizeBytes,
+              documentLabel: a.documentLabel ?? null,
+            })
           ),
           modelVersion: REVIEW_MODEL,
           promptVersion: PROMPT_VERSION,

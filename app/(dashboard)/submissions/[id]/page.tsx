@@ -5,9 +5,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getWorkspaceId } from "@/lib/workspace";
 import { db } from "@/lib/db";
 import { requestReview } from "@/lib/actions/review";
-import { uploadArtifact, deleteArtifact } from "@/lib/actions/artifact";
+import { uploadArtifact, deleteArtifact, labelArtifact } from "@/lib/actions/artifact";
 import { buttonVariants } from "@/lib/button-variants";
 import { UploadButton } from "./_components/upload-button";
+import { LabelSelect } from "./_components/label-select";
 import { selectProfile } from "@/lib/ai/review-profiles";
 import type { PermitType, ProjectType, SubmissionStatus, ReviewVerdict, IssueSeverity } from "@prisma/client";
 
@@ -38,6 +39,7 @@ async function getSubmission(id: string, workspaceId: string) {
           mimeType: true,
           sizeBytes: true,
           storagePath: true,
+          documentLabel: true,
           createdAt: true,
         },
       },
@@ -145,7 +147,7 @@ function formatDate(date: Date): string {
 
 function parseSnapshotArtifact(
   s: string
-): { fileName: string; mimeType: string; sizeBytes: number } | null {
+): { fileName: string; mimeType: string; sizeBytes: number; documentLabel?: string | null } | null {
   try {
     return JSON.parse(s);
   } catch {
@@ -300,6 +302,9 @@ function ReviewBody({ review }: { review: ReviewRecord }) {
             {parsedArtifacts.map((a, i) => (
               <li key={i} className="text-xs text-zinc-500">
                 {a.fileName}
+                {a.documentLabel && (
+                  <span className="ml-1.5 text-zinc-400">[{a.documentLabel}]</span>
+                )}
                 <span className="ml-1.5 text-zinc-300">{formatBytes(a.sizeBytes)}</span>
               </li>
             ))}
@@ -510,12 +515,25 @@ export default async function SubmissionDetailPage({
           <div className="py-4">
             <p className="mb-3 text-xs text-zinc-400">{profile.displayName}</p>
             <ul className="mb-4 space-y-1.5">
-              {profile.requiredDocuments.map((doc, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-zinc-700">
-                  <span className="mt-0.5 shrink-0 text-zinc-300">–</span>
-                  {doc}
-                </li>
-              ))}
+              {profile.requiredDocuments.map((doc, i) => {
+                const covered = submission.artifacts.some(
+                  (a) => a.documentLabel === doc
+                );
+                return (
+                  <li key={i} className="flex items-start gap-2 text-sm">
+                    <span
+                      className={`mt-0.5 shrink-0 text-xs font-semibold ${
+                        covered ? "text-green-600" : "text-zinc-300"
+                      }`}
+                    >
+                      {covered ? "✓" : "–"}
+                    </span>
+                    <span className={covered ? "text-zinc-700" : "text-zinc-500"}>
+                      {doc}
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
             <div className="mb-3 flex flex-wrap gap-1.5">
               {profile.focusAreas.map((area, i) => (
@@ -528,7 +546,8 @@ export default async function SubmissionDetailPage({
               ))}
             </div>
             <p className="text-xs text-zinc-400">
-              Typical requirements — confirm with your jurisdiction.
+              Typical requirements — confirm with your jurisdiction. Mark
+              uploaded files with a document type to track coverage.
             </p>
           </div>
         </Section>
@@ -559,7 +578,7 @@ export default async function SubmissionDetailPage({
           ) : (
             <ul className="divide-y divide-zinc-100">
               {artifactsWithUrls.map((a) => (
-                <li key={a.id} className="flex items-center gap-3 py-3">
+                <li key={a.id} className="flex items-start gap-3 py-3">
                   <div className="min-w-0 flex-1">
                     {a.signedUrl ? (
                       <a
@@ -579,10 +598,24 @@ export default async function SubmissionDetailPage({
                       {formatBytes(a.sizeBytes)}
                     </p>
                   </div>
-                  <span className="shrink-0 text-xs text-zinc-400">
-                    {a.mimeType}
-                  </span>
-                  <form action={deleteArtifact}>
+                  <form action={labelArtifact} className="shrink-0">
+                    <input type="hidden" name="artifactId" value={a.id} />
+                    <input type="hidden" name="submissionId" value={submission.id} />
+                    <LabelSelect
+                      name="documentLabel"
+                      defaultValue={a.documentLabel ?? ""}
+                      className="rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs text-zinc-700 outline-none focus:border-zinc-400 max-w-52"
+                    >
+                      <option value="">— unlabeled —</option>
+                      {profile.requiredDocuments.map((doc) => (
+                        <option key={doc} value={doc}>
+                          {doc}
+                        </option>
+                      ))}
+                      <option value="Other">Other</option>
+                    </LabelSelect>
+                  </form>
+                  <form action={deleteArtifact} className="shrink-0 pt-0.5">
                     <input type="hidden" name="artifactId" value={a.id} />
                     <input type="hidden" name="submissionId" value={submission.id} />
                     <button

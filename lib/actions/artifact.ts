@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getWorkspaceId } from "@/lib/workspace";
 import { db } from "@/lib/db";
+import { selectProfile } from "@/lib/ai/review-profiles";
 
 const BUCKET = "artifacts";
 
@@ -64,6 +65,50 @@ export async function uploadArtifact(formData: FormData): Promise<void> {
     await adminClient.storage.from(BUCKET).remove([storagePath]).catch(() => {});
     redirect(`/submissions/${submissionId}?upload_error=1`);
   }
+
+  redirect(`/submissions/${submissionId}`);
+}
+
+export async function labelArtifact(formData: FormData): Promise<void> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const workspaceId = await getWorkspaceId(user.id);
+
+  const artifactId = (formData.get("artifactId") as string)?.trim();
+  const submissionId = (formData.get("submissionId") as string)?.trim();
+  if (!artifactId || !submissionId) redirect("/submissions");
+
+  // Ownership check — join through to submission for profile validation
+  const artifact = await db.artifact.findFirst({
+    where: { id: artifactId, workspaceId },
+    select: {
+      id: true,
+      submission: { select: { permitType: true, projectType: true } },
+    },
+  });
+  if (!artifact) redirect(`/submissions/${submissionId}`);
+
+  // Server-side validation: label must be empty, "Other", or a profile required document
+  const profile = selectProfile(
+    artifact.submission.permitType,
+    artifact.submission.projectType
+  );
+  const allowed = new Set([...profile.requiredDocuments, "Other"]);
+  const rawLabel = (formData.get("documentLabel") as string)?.trim() ?? "";
+  const documentLabel = rawLabel === "" ? null : rawLabel;
+
+  if (documentLabel !== null && !allowed.has(documentLabel)) {
+    redirect(`/submissions/${submissionId}`);
+  }
+
+  await db.artifact.update({
+    where: { id: artifactId },
+    data: { documentLabel },
+  });
 
   redirect(`/submissions/${submissionId}`);
 }

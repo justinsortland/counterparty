@@ -17,6 +17,7 @@ export type ArtifactMeta = {
   fileName: string;
   mimeType: string;
   sizeBytes: number;
+  documentLabel?: string | null;
 };
 
 export type ReviewInput = {
@@ -159,7 +160,8 @@ function buildUserMessage(input: ReviewInput): string {
   if (input.artifacts.length > 0) {
     lines.push(`ATTACHED DOCUMENTS:`);
     for (const a of input.artifacts) {
-      lines.push(`- ${a.fileName} (${a.mimeType}, ${formatBytes(a.sizeBytes)})`);
+      const label = a.documentLabel ? ` [${a.documentLabel}]` : "";
+      lines.push(`- ${a.fileName}${label} (${a.mimeType}, ${formatBytes(a.sizeBytes)})`);
     }
   } else {
     lines.push(`ATTACHED DOCUMENTS: None`);
