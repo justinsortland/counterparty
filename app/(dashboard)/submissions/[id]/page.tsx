@@ -48,6 +48,7 @@ async function getSubmission(id: string, workspaceId: string) {
           verdict: true,
           summary: true,
           missingDocs: true,
+          snapshotArtifacts: true,
           modelVersion: true,
           createdAt: true,
           issues: {
@@ -141,6 +142,16 @@ function formatDate(date: Date): string {
   }).format(date);
 }
 
+function parseSnapshotArtifact(
+  s: string
+): { fileName: string; mimeType: string; sizeBytes: number } | null {
+  try {
+    return JSON.parse(s);
+  } catch {
+    return null;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Sub-components
 // ---------------------------------------------------------------------------
@@ -169,65 +180,70 @@ function Section({
 }) {
   return (
     <div className="rounded-lg border border-zinc-200 bg-white">
-      <div className="border-b border-zinc-100 px-5 py-3">
-        <h2 className="text-sm font-medium text-zinc-700">{title}</h2>
+      <div className="border-b border-zinc-100 px-5 py-3.5">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+          {title}
+        </h2>
       </div>
       <div className="px-5">{children}</div>
     </div>
   );
 }
 
-type ReviewRecord = NonNullable<Awaited<ReturnType<typeof getSubmission>>>["reviews"][number];
+type ReviewRecord = NonNullable<
+  Awaited<ReturnType<typeof getSubmission>>
+>["reviews"][number];
 
-function ReviewCard({ review }: { review: ReviewRecord }) {
-  const criticalCount = review.issues.filter((i) => i.severity === "CRITICAL").length;
-  const majorCount = review.issues.filter((i) => i.severity === "MAJOR").length;
-  const minorCount = review.issues.filter((i) => i.severity === "MINOR").length;
+function IssueSummaryChips({
+  issues,
+}: {
+  issues: ReviewRecord["issues"];
+}) {
+  const criticalCount = issues.filter((i) => i.severity === "CRITICAL").length;
+  const majorCount = issues.filter((i) => i.severity === "MAJOR").length;
+  const minorCount = issues.filter((i) => i.severity === "MINOR").length;
+
+  if (issues.length === 0) return null;
 
   return (
-    <div className="py-5 border-b border-zinc-100 last:border-0">
-      {/* Review header */}
-      <div className={`border-l-2 pl-3 mb-3 ${VERDICT_BORDER[review.verdict]}`}>
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-semibold text-zinc-500">
-            Revision {review.revisionNumber}
-          </span>
-          <span
-            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${VERDICT_STYLES[review.verdict]}`}
-          >
-            {VERDICT_LABELS[review.verdict]}
-          </span>
-          <span className="ml-auto text-xs text-zinc-400">
-            {formatDate(review.createdAt)}
-          </span>
-        </div>
-      </div>
+    <div className="flex items-center gap-2">
+      {criticalCount > 0 && (
+        <span className="inline-flex items-center rounded-md bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
+          {criticalCount} critical
+        </span>
+      )}
+      {majorCount > 0 && (
+        <span className="inline-flex items-center rounded-md bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+          {majorCount} major
+        </span>
+      )}
+      {minorCount > 0 && (
+        <span className="inline-flex items-center rounded-md bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">
+          {minorCount} minor
+        </span>
+      )}
+    </div>
+  );
+}
 
+function ReviewBody({ review }: { review: ReviewRecord }) {
+  const parsedArtifacts = review.snapshotArtifacts
+    .map(parseSnapshotArtifact)
+    .filter((a): a is NonNullable<typeof a> => a !== null);
+
+  return (
+    <>
       {/* Summary */}
       <p className="mb-4 text-sm text-zinc-700">{review.summary}</p>
 
       {/* Issue counts */}
       {review.issues.length > 0 && (
-        <div className="mb-4 flex gap-3">
-          {criticalCount > 0 && (
-            <span className="inline-flex items-center rounded-md bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
-              {criticalCount} critical
-            </span>
-          )}
-          {majorCount > 0 && (
-            <span className="inline-flex items-center rounded-md bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
-              {majorCount} major
-            </span>
-          )}
-          {minorCount > 0 && (
-            <span className="inline-flex items-center rounded-md bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">
-              {minorCount} minor
-            </span>
-          )}
+        <div className="mb-4">
+          <IssueSummaryChips issues={review.issues} />
         </div>
       )}
 
-      {/* Issues */}
+      {/* Individual issues */}
       {review.issues.length > 0 && (
         <div className="mb-4 space-y-2">
           {review.issues.map((issue) => (
@@ -258,7 +274,7 @@ function ReviewCard({ review }: { review: ReviewRecord }) {
 
       {/* Missing docs */}
       {review.missingDocs.length > 0 && (
-        <div>
+        <div className="mb-4">
           <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-zinc-400">
             Missing Documentation
           </p>
@@ -273,8 +289,95 @@ function ReviewCard({ review }: { review: ReviewRecord }) {
         </div>
       )}
 
+      {/* Artifact snapshot */}
+      <div className="pt-3 border-t border-zinc-100">
+        <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-zinc-400">
+          Documents at review time
+        </p>
+        {parsedArtifacts.length > 0 ? (
+          <ul className="space-y-0.5">
+            {parsedArtifacts.map((a, i) => (
+              <li key={i} className="text-xs text-zinc-500">
+                {a.fileName}
+                <span className="ml-1.5 text-zinc-300">{formatBytes(a.sizeBytes)}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-xs text-zinc-400">None attached</p>
+        )}
+      </div>
+
       <p className="mt-3 text-xs text-zinc-300">Model: {review.modelVersion}</p>
+    </>
+  );
+}
+
+function ReviewCard({
+  review,
+  isLatest,
+}: {
+  review: ReviewRecord;
+  isLatest: boolean;
+}) {
+  const header = (
+    <div className={`border-l-2 pl-3 ${VERDICT_BORDER[review.verdict]}`}>
+      <div className="flex items-center gap-2.5">
+        <span className="text-xs font-semibold text-zinc-500">
+          Revision {review.revisionNumber}
+        </span>
+        {isLatest && (
+          <span className="rounded-full bg-zinc-100 px-1.5 py-0.5 text-xs font-medium text-zinc-500">
+            Latest
+          </span>
+        )}
+        <span
+          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${VERDICT_STYLES[review.verdict]}`}
+        >
+          {VERDICT_LABELS[review.verdict]}
+        </span>
+        <span className="ml-auto text-xs text-zinc-400">
+          {formatDate(review.createdAt)}
+        </span>
+      </div>
     </div>
+  );
+
+  if (isLatest) {
+    return (
+      <div className="py-5 border-b border-zinc-100 last:border-0">
+        <div className="mb-4">{header}</div>
+        <ReviewBody review={review} />
+      </div>
+    );
+  }
+
+  // Older reviews: collapsed by default
+  return (
+    <details className="group border-b border-zinc-100 last:border-0">
+      <summary className="flex cursor-pointer list-none items-center gap-3 py-4">
+        <div className={`flex-1 border-l-2 pl-3 ${VERDICT_BORDER[review.verdict]}`}>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <span className="text-xs font-semibold text-zinc-500">
+              Revision {review.revisionNumber}
+            </span>
+            <span
+              className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${VERDICT_STYLES[review.verdict]}`}
+            >
+              {VERDICT_LABELS[review.verdict]}
+            </span>
+            <span className="text-xs text-zinc-400">{formatDate(review.createdAt)}</span>
+            <IssueSummaryChips issues={review.issues} />
+          </div>
+        </div>
+        <span className="inline-block shrink-0 text-sm text-zinc-300 transition-transform group-open:rotate-90">
+          ›
+        </span>
+      </summary>
+      <div className="pb-5">
+        <ReviewBody review={review} />
+      </div>
+    </details>
   );
 }
 
@@ -375,7 +478,7 @@ export default async function SubmissionDetailPage({
         </div>
       </div>
 
-      <div className="flex flex-col gap-4 max-w-2xl">
+      <div className="flex flex-col gap-6 max-w-2xl">
         {/* Details */}
         <Section title="Details">
           <DetailRow label="Jurisdiction">{submission.jurisdiction}</DetailRow>
@@ -491,9 +594,12 @@ export default async function SubmissionDetailPage({
               </p>
             </div>
           ) : (
-            submission.reviews.map((review) => (
-              <ReviewCard key={review.id} review={review} />
-            ))
+            <>
+              <ReviewCard review={submission.reviews[0]} isLatest />
+              {submission.reviews.slice(1).map((review) => (
+                <ReviewCard key={review.id} review={review} isLatest={false} />
+              ))}
+            </>
           )}
         </Section>
       </div>
