@@ -44,6 +44,10 @@ export async function requestReview(formData: FormData): Promise<void> {
         projectType: true,
         scopeOfWork: true,
         reviewContext: true,
+        artifacts: {
+          orderBy: { createdAt: "asc" },
+          select: { fileName: true, mimeType: true, sizeBytes: true },
+        },
       },
     });
     console.log("[review] submission found:", !!submission);
@@ -64,6 +68,7 @@ export async function requestReview(formData: FormData): Promise<void> {
       projectType: submission.projectType,
       scopeOfWork: submission.scopeOfWork,
       reviewContext: submission.reviewContext,
+      artifacts: submission.artifacts,
     });
     console.log(
       "[review] runReview complete — verdict:", result.verdict,
@@ -90,7 +95,9 @@ export async function requestReview(formData: FormData): Promise<void> {
           snapshotPermitType: submission.permitType,
           snapshotProjectType: submission.projectType,
           snapshotReviewContext: submission.reviewContext,
-          snapshotArtifacts: [],
+          snapshotArtifacts: submission.artifacts.map((a) =>
+            JSON.stringify({ fileName: a.fileName, mimeType: a.mimeType, sizeBytes: a.sizeBytes })
+          ),
           modelVersion: REVIEW_MODEL,
           promptVersion: PROMPT_VERSION,
           rawPayload: result.rawPayload,

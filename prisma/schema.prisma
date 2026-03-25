@@ -70,6 +70,7 @@ model Workspace {
   members     WorkspaceMember[]
   submissions Submission[]
   reviews     Review[]
+  artifacts   Artifact[]
 
   @@map("workspaces")
 }
@@ -120,6 +121,7 @@ model Submission {
 
   workspace Workspace @relation(fields: [workspaceId], references: [id])
   reviews   Review[]
+  artifacts Artifact[]
 
   @@index([workspaceId])
   @@index([workspaceId, status])
@@ -167,6 +169,24 @@ model Review {
   @@index([workspaceId])
   @@index([submissionId])
   @@map("reviews")
+}
+
+model Artifact {
+  id           String   @id @default(cuid())
+  workspaceId  String
+  submissionId String
+  fileName     String
+  mimeType     String
+  sizeBytes    Int
+  storagePath  String
+  createdAt    DateTime @default(now())
+
+  workspace  Workspace  @relation(fields: [workspaceId], references: [id])
+  submission Submission @relation(fields: [submissionId], references: [id])
+
+  @@index([submissionId])
+  @@index([workspaceId])
+  @@map("artifacts")
 }
 
 model ReviewIssue {

@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getWorkspaceId } from "@/lib/workspace";
 import { db } from "@/lib/db";
 import { requestReview } from "@/lib/actions/review";
+import { uploadArtifact, deleteArtifact } from "@/lib/actions/artifact";
 import { buttonVariants } from "@/lib/button-variants";
+import { UploadButton } from "./_components/upload-button";
 import type { PermitType, ProjectType, SubmissionStatus, ReviewVerdict, IssueSeverity } from "@prisma/client";
 
 // ---------------------------------------------------------------------------
@@ -26,6 +29,17 @@ async function getSubmission(id: string, workspaceId: string) {
       status: true,
       createdAt: true,
       updatedAt: true,
+      artifacts: {
+        orderBy: { createdAt: "asc" },
+        select: {
+          id: true,
+          fileName: true,
+          mimeType: true,
+          sizeBytes: true,
+          storagePath: true,
+          createdAt: true,
+        },
+      },
       reviews: {
         orderBy: { createdAt: "desc" },
         select: {
@@ -112,6 +126,12 @@ const SEVERITY_STYLES: Record<IssueSeverity, string> = {
   MAJOR: "bg-amber-50 text-amber-700",
   MINOR: "bg-zinc-100 text-zinc-600",
 };
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 function formatDate(date: Date): string {
   return new Intl.DateTimeFormat("en-US", {
@@ -296,7 +316,7 @@ export default async function SubmissionDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ review_error?: string }>;
+  searchParams: Promise<{ review_error?: string; upload_error?: string }>;
 }) {
   const supabase = await createClient();
   const {
@@ -305,11 +325,22 @@ export default async function SubmissionDetailPage({
   if (!user) redirect("/login");
 
   const { id } = await params;
-  const { review_error } = await searchParams;
+  const { review_error, upload_error } = await searchParams;
   const workspaceId = await getWorkspaceId(user.id);
   const submission = await getSubmission(id, workspaceId);
 
   if (!submission) return <NotFound />;
+
+  // Generate signed download URLs for artifacts (1-hour expiry)
+  const adminClient = createAdminClient();
+  const artifactsWithUrls = await Promise.all(
+    submission.artifacts.map(async (a) => {
+      const { data } = await adminClient.storage
+        .from("artifacts")
+        .createSignedUrl(a.storagePath, 3600);
+      return { ...a, signedUrl: data?.signedUrl ?? null };
+    })
+  );
 
   return (
     <div className="p-8">
@@ -366,6 +397,71 @@ export default async function SubmissionDetailPage({
           )}
           <DetailRow label="Created">{formatDate(submission.createdAt)}</DetailRow>
           <DetailRow label="Updated">{formatDate(submission.updatedAt)}</DetailRow>
+        </Section>
+
+        {/* Attachments */}
+        <Section title="Attachments">
+          <div className="py-4 border-b border-zinc-100">
+            {upload_error && (
+              <p className="mb-3 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-xs text-red-700">
+                Upload failed — check that the file is valid and try again.
+              </p>
+            )}
+            <form action={uploadArtifact} className="flex items-center gap-3">
+              <input type="hidden" name="submissionId" value={submission.id} />
+              <input
+                type="file"
+                name="file"
+                className="text-sm text-zinc-600 file:mr-3 file:rounded-md file:border-0 file:bg-zinc-100 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-zinc-700 hover:file:bg-zinc-200"
+              />
+              <UploadButton />
+            </form>
+          </div>
+
+          {artifactsWithUrls.length === 0 ? (
+            <div className="py-8 text-center">
+              <p className="text-sm text-zinc-400">No files attached yet.</p>
+            </div>
+          ) : (
+            <ul className="divide-y divide-zinc-100">
+              {artifactsWithUrls.map((a) => (
+                <li key={a.id} className="flex items-center gap-3 py-3">
+                  <div className="min-w-0 flex-1">
+                    {a.signedUrl ? (
+                      <a
+                        href={a.signedUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="truncate text-sm font-medium text-zinc-900 hover:text-zinc-600"
+                      >
+                        {a.fileName}
+                      </a>
+                    ) : (
+                      <span className="truncate text-sm font-medium text-zinc-900">
+                        {a.fileName}
+                      </span>
+                    )}
+                    <p className="mt-0.5 text-xs text-zinc-400">
+                      {formatBytes(a.sizeBytes)}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-xs text-zinc-400">
+                    {a.mimeType}
+                  </span>
+                  <form action={deleteArtifact}>
+                    <input type="hidden" name="artifactId" value={a.id} />
+                    <input type="hidden" name="submissionId" value={submission.id} />
+                    <button
+                      type="submit"
+                      className="text-xs text-red-400 hover:text-red-600"
+                    >
+                      Remove
+                    </button>
+                  </form>
+                </li>
+              ))}
+            </ul>
+          )}
         </Section>
 
         {/* Reviews */}

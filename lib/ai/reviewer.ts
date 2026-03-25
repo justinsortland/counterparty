@@ -12,6 +12,12 @@ export const PROMPT_VERSION = "v1";
 // Types
 // ---------------------------------------------------------------------------
 
+export type ArtifactMeta = {
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+};
+
 export type ReviewInput = {
   title: string;
   address: string;
@@ -20,6 +26,7 @@ export type ReviewInput = {
   projectType: ProjectType;
   scopeOfWork: string;
   reviewContext: string | null;
+  artifacts: ArtifactMeta[];
 };
 
 export type ParsedIssue = {
@@ -61,6 +68,16 @@ const PROJECT_TYPE_LABELS: Record<ProjectType, string> = {
   DEMOLITION: "demolition",
   OTHER: "general construction project",
 };
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 // ---------------------------------------------------------------------------
 // Validation sets
@@ -121,6 +138,16 @@ function buildUserMessage(input: ReviewInput): string {
 
   if (input.reviewContext) {
     lines.push(``, `ADDITIONAL CONTEXT FROM APPLICANT:`, input.reviewContext);
+  }
+
+  lines.push(``);
+  if (input.artifacts.length > 0) {
+    lines.push(`ATTACHED DOCUMENTS:`);
+    for (const a of input.artifacts) {
+      lines.push(`- ${a.fileName} (${a.mimeType}, ${formatBytes(a.sizeBytes)})`);
+    }
+  } else {
+    lines.push(`ATTACHED DOCUMENTS: None`);
   }
 
   return lines.join("\n");
