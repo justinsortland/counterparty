@@ -1,12 +1,13 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { IssueSeverity, PermitType, ProjectType, ReviewVerdict } from "@prisma/client";
+import type { ReviewProfile } from "./review-profiles";
 
 // ---------------------------------------------------------------------------
 // Provenance constants — bump PROMPT_VERSION whenever the prompt changes
 // ---------------------------------------------------------------------------
 
 export const REVIEW_MODEL = process.env.REVIEW_MODEL ?? "claude-sonnet-4-6";
-export const PROMPT_VERSION = "v1";
+export const PROMPT_VERSION = "v2";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -27,6 +28,7 @@ export type ReviewInput = {
   scopeOfWork: string;
   reviewContext: string | null;
   artifacts: ArtifactMeta[];
+  profile: ReviewProfile;
 };
 
 export type ParsedIssue = {
@@ -90,7 +92,11 @@ const VALID_SEVERITIES = new Set<string>(["CRITICAL", "MAJOR", "MINOR"]);
 // Prompt builders
 // ---------------------------------------------------------------------------
 
-function buildSystemPrompt(jurisdiction: string, permitType: PermitType): string {
+function buildSystemPrompt(
+  jurisdiction: string,
+  permitType: PermitType,
+  profile: ReviewProfile
+): string {
   return `You are an experienced residential building plan checker working for the ${jurisdiction} permitting department.
 
 Your job is to review a ${PERMIT_TYPE_LABELS[permitType]} permit application and identify every issue a real plan checker would raise before approving it. Be thorough, realistic, and specific to the jurisdiction and permit type. Do not hedge — give direct, technical feedback a contractor or homeowner would receive at the permit counter.
@@ -121,7 +127,11 @@ Severity definitions:
 Verdict logic (apply strictly):
 - LIKELY_APPROVE: no CRITICAL or MAJOR issues
 - CONDITIONAL: one or more MAJOR issues, no CRITICAL
-- LIKELY_REJECT: one or more CRITICAL issues`;
+- LIKELY_REJECT: one or more CRITICAL issues
+
+REVIEW PROFILE: ${profile.displayName}
+Focus areas: ${profile.focusAreas.join(" · ")}
+${profile.reviewerGuidance}`;
 }
 
 function buildUserMessage(input: ReviewInput): string {
@@ -138,6 +148,11 @@ function buildUserMessage(input: ReviewInput): string {
 
   if (input.reviewContext) {
     lines.push(``, `ADDITIONAL CONTEXT FROM APPLICANT:`, input.reviewContext);
+  }
+
+  lines.push(``, `TYPICAL REQUIRED DOCUMENTS FOR THIS PERMIT TYPE:`);
+  for (const doc of input.profile.requiredDocuments) {
+    lines.push(`- ${doc}`);
   }
 
   lines.push(``);
@@ -260,7 +275,7 @@ export async function runReview(input: ReviewInput): Promise<ReviewResult> {
     model: REVIEW_MODEL,
     max_tokens: 2048,
     temperature: 0,
-    system: buildSystemPrompt(input.jurisdiction, input.permitType),
+    system: buildSystemPrompt(input.jurisdiction, input.permitType, input.profile),
     messages: [{ role: "user", content: buildUserMessage(input) }],
   });
 

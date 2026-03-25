@@ -8,6 +8,7 @@ import { requestReview } from "@/lib/actions/review";
 import { uploadArtifact, deleteArtifact } from "@/lib/actions/artifact";
 import { buttonVariants } from "@/lib/button-variants";
 import { UploadButton } from "./_components/upload-button";
+import { selectProfile } from "@/lib/ai/review-profiles";
 import type { PermitType, ProjectType, SubmissionStatus, ReviewVerdict, IssueSeverity } from "@prisma/client";
 
 // ---------------------------------------------------------------------------
@@ -434,6 +435,8 @@ export default async function SubmissionDetailPage({
 
   if (!submission) return <NotFound />;
 
+  const profile = selectProfile(submission.permitType, submission.projectType);
+
   // Generate signed download URLs for artifacts (1-hour expiry)
   const adminClient = createAdminClient();
   const artifactsWithUrls = await Promise.all(
@@ -500,6 +503,34 @@ export default async function SubmissionDetailPage({
           )}
           <DetailRow label="Created">{formatDate(submission.createdAt)}</DetailRow>
           <DetailRow label="Updated">{formatDate(submission.updatedAt)}</DetailRow>
+        </Section>
+
+        {/* Expected Documents */}
+        <Section title="Expected Documents">
+          <div className="py-4">
+            <p className="mb-3 text-xs text-zinc-400">{profile.displayName}</p>
+            <ul className="mb-4 space-y-1.5">
+              {profile.requiredDocuments.map((doc, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm text-zinc-700">
+                  <span className="mt-0.5 shrink-0 text-zinc-300">–</span>
+                  {doc}
+                </li>
+              ))}
+            </ul>
+            <div className="mb-3 flex flex-wrap gap-1.5">
+              {profile.focusAreas.map((area, i) => (
+                <span
+                  key={i}
+                  className="inline-flex items-center rounded-md bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600"
+                >
+                  {area}
+                </span>
+              ))}
+            </div>
+            <p className="text-xs text-zinc-400">
+              Typical requirements — confirm with your jurisdiction.
+            </p>
+          </div>
         </Section>
 
         {/* Attachments */}

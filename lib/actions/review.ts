@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getWorkspaceId } from "@/lib/workspace";
 import { db } from "@/lib/db";
 import { runReview, REVIEW_MODEL, PROMPT_VERSION } from "@/lib/ai/reviewer";
+import { selectProfile } from "@/lib/ai/review-profiles";
 import type { SubmissionStatus } from "@prisma/client";
 
 export async function requestReview(formData: FormData): Promise<void> {
@@ -58,6 +59,10 @@ export async function requestReview(formData: FormData): Promise<void> {
     const revisionNumber = existingCount + 1;
     console.log("[review] revisionNumber:", revisionNumber);
 
+    // ── Profile
+    const profile = selectProfile(submission.permitType, submission.projectType);
+    console.log("[review] profile:", profile.id);
+
     // ── AI call
     console.log("[review] calling runReview — model:", REVIEW_MODEL);
     const result = await runReview({
@@ -69,6 +74,7 @@ export async function requestReview(formData: FormData): Promise<void> {
       scopeOfWork: submission.scopeOfWork,
       reviewContext: submission.reviewContext,
       artifacts: submission.artifacts,
+      profile,
     });
     console.log(
       "[review] runReview complete — verdict:", result.verdict,
