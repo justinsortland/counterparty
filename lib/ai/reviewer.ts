@@ -1,13 +1,14 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { IssueSeverity, PermitType, ProjectType, ReviewVerdict } from "@prisma/client";
 import type { ReviewProfile } from "./review-profiles";
+import { computeCoverage } from "./document-coverage";
 
 // ---------------------------------------------------------------------------
 // Provenance constants — bump PROMPT_VERSION whenever the prompt changes
 // ---------------------------------------------------------------------------
 
 export const REVIEW_MODEL = process.env.REVIEW_MODEL ?? "claude-sonnet-4-6";
-export const PROMPT_VERSION = "v2";
+export const PROMPT_VERSION = "v3";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -132,7 +133,12 @@ Verdict logic (apply strictly):
 
 REVIEW PROFILE: ${profile.displayName}
 Focus areas: ${profile.focusAreas.join(" · ")}
-${profile.reviewerGuidance}`;
+${profile.reviewerGuidance}
+
+When populating missingDocs:
+- Do NOT list a document as missing if it appears under "Confirmed attached" in the submission context.
+- If a confirmed document appears insufficient or incomplete, raise it as an issue with appropriate severity instead.
+- Limit missingDocs to documents under "Not yet confirmed" that are genuinely required for this permit type.`;
 }
 
 function buildUserMessage(input: ReviewInput): string {
@@ -151,20 +157,37 @@ function buildUserMessage(input: ReviewInput): string {
     lines.push(``, `ADDITIONAL CONTEXT FROM APPLICANT:`, input.reviewContext);
   }
 
-  lines.push(``, `TYPICAL REQUIRED DOCUMENTS FOR THIS PERMIT TYPE:`);
-  for (const doc of input.profile.requiredDocuments) {
-    lines.push(`- ${doc}`);
+  const coverage = computeCoverage(input.profile.requiredDocuments, input.artifacts);
+
+  lines.push(``, `DOCUMENT COVERAGE:`);
+
+  lines.push(``, `Confirmed attached (do NOT list in missingDocs):`);
+  if (coverage.covered.length === 0) {
+    lines.push(`  None`);
+  } else {
+    for (const doc of coverage.covered) {
+      const files = input.artifacts
+        .filter((a) => a.documentLabel === doc)
+        .map((a) => a.fileName)
+        .join(", ");
+      lines.push(`  - ${doc} → ${files}`);
+    }
   }
 
-  lines.push(``);
-  if (input.artifacts.length > 0) {
-    lines.push(`ATTACHED DOCUMENTS:`);
-    for (const a of input.artifacts) {
-      const label = a.documentLabel ? ` [${a.documentLabel}]` : "";
-      lines.push(`- ${a.fileName}${label} (${a.mimeType}, ${formatBytes(a.sizeBytes)})`);
-    }
+  lines.push(``, `Not yet confirmed (flag in missingDocs if required for this permit type):`);
+  if (coverage.uncovered.length === 0) {
+    lines.push(`  None`);
   } else {
-    lines.push(`ATTACHED DOCUMENTS: None`);
+    for (const doc of coverage.uncovered) {
+      lines.push(`  - ${doc}`);
+    }
+  }
+
+  if (coverage.unlabeled.length > 0) {
+    lines.push(``, `Unlabeled uploads (document type not confirmed by user):`);
+    for (const a of coverage.unlabeled) {
+      lines.push(`  - ${a.fileName} (${a.mimeType}, ${formatBytes(a.sizeBytes)})`);
+    }
   }
 
   return lines.join("\n");

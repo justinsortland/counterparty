@@ -10,6 +10,7 @@ import { buttonVariants } from "@/lib/button-variants";
 import { UploadButton } from "./_components/upload-button";
 import { LabelSelect } from "./_components/label-select";
 import { selectProfile } from "@/lib/ai/review-profiles";
+import { computeCoverage } from "@/lib/ai/document-coverage";
 import type { PermitType, ProjectType, SubmissionStatus, ReviewVerdict, IssueSeverity } from "@prisma/client";
 
 // ---------------------------------------------------------------------------
@@ -441,6 +442,7 @@ export default async function SubmissionDetailPage({
   if (!submission) return <NotFound />;
 
   const profile = selectProfile(submission.permitType, submission.projectType);
+  const coverage = computeCoverage(profile.requiredDocuments, submission.artifacts);
 
   // Generate signed download URLs for artifacts (1-hour expiry)
   const adminClient = createAdminClient();
@@ -516,19 +518,17 @@ export default async function SubmissionDetailPage({
             <p className="mb-3 text-xs text-zinc-400">{profile.displayName}</p>
             <ul className="mb-4 space-y-1.5">
               {profile.requiredDocuments.map((doc, i) => {
-                const covered = submission.artifacts.some(
-                  (a) => a.documentLabel === doc
-                );
+                const isCovered = coverage.covered.includes(doc);
                 return (
                   <li key={i} className="flex items-start gap-2 text-sm">
                     <span
                       className={`mt-0.5 shrink-0 text-xs font-semibold ${
-                        covered ? "text-green-600" : "text-zinc-300"
+                        isCovered ? "text-green-600" : "text-zinc-300"
                       }`}
                     >
-                      {covered ? "✓" : "–"}
+                      {isCovered ? "✓" : "–"}
                     </span>
-                    <span className={covered ? "text-zinc-700" : "text-zinc-500"}>
+                    <span className={isCovered ? "text-zinc-700" : "text-zinc-500"}>
                       {doc}
                     </span>
                   </li>
