@@ -45,6 +45,7 @@ const FAMILY_PATTERNS: { key: string; pattern: RegExp }[] = [
   { key: "structural-calc",     pattern: /\bstructural calc/ },
   { key: "plumbing-plan",       pattern: /\bplumbing plan\b/ },
   { key: "mechanical-plan",     pattern: /\bmechanical plan\b/ },
+  { key: "energy-compliance",   pattern: /\benergy compliance\b/ },
 ];
 
 function docFamilyKey(s: string): string {

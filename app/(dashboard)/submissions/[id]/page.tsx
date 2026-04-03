@@ -626,14 +626,20 @@ export default async function SubmissionDetailPage({
             <ul className="mb-4 space-y-1.5">
               {profile.requiredDocuments.map((doc, i) => {
                 const isCovered = coverage.covered.includes(doc);
+                const isLikelyCovered =
+                  !isCovered && coverage.likelyCovered.some((lc) => lc.docLabel === doc);
                 return (
                   <li key={i} className="flex items-start gap-2 text-sm">
                     <span
                       className={`mt-0.5 shrink-0 text-xs font-semibold ${
-                        isCovered ? "text-green-600" : "text-zinc-300"
+                        isCovered
+                          ? "text-green-600"
+                          : isLikelyCovered
+                          ? "text-amber-500"
+                          : "text-zinc-300"
                       }`}
                     >
-                      {isCovered ? "✓" : "–"}
+                      {isCovered ? "✓" : isLikelyCovered ? "~" : "–"}
                     </span>
                     <span className={isCovered ? "text-zinc-700" : "text-zinc-500"}>
                       {doc}
@@ -642,6 +648,32 @@ export default async function SubmissionDetailPage({
                 );
               })}
             </ul>
+            {coverage.likelyCovered.filter(
+              (lc) => !profile.requiredDocuments.includes(lc.docLabel)
+            ).length > 0 && (
+              <div className="mb-3 pt-3 border-t border-zinc-100">
+                <p className="mb-1.5 text-xs font-medium text-zinc-400">
+                  Likely covered by attached bundle
+                </p>
+                <ul className="space-y-1">
+                  {coverage.likelyCovered
+                    .filter((lc) => !profile.requiredDocuments.includes(lc.docLabel))
+                    .map((lc, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm">
+                        <span className="mt-0.5 shrink-0 text-xs font-semibold text-amber-500">
+                          ~
+                        </span>
+                        <span className="text-zinc-500">
+                          {lc.docLabel}
+                          <span className="ml-1 text-xs text-zinc-400">
+                            — not individually confirmed
+                          </span>
+                        </span>
+                      </li>
+                    ))}
+                </ul>
+              </div>
+            )}
             <div className="mb-3 flex flex-wrap gap-1.5">
               {profile.focusAreas.map((area, i) => (
                 <span

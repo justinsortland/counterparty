@@ -8,7 +8,7 @@ import { computeCoverage } from "./document-coverage";
 // ---------------------------------------------------------------------------
 
 export const REVIEW_MODEL = process.env.REVIEW_MODEL ?? "claude-sonnet-4-6";
-export const PROMPT_VERSION = "v3";
+export const PROMPT_VERSION = "v4";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -137,8 +137,10 @@ ${profile.reviewerGuidance}
 
 When populating missingDocs:
 - Do NOT list a document as missing if it appears under "Confirmed attached" in the submission context.
+- Do NOT list a document as missing if it appears under "Likely covered by attached bundle" — treat it as likely present. If its sufficiency or completeness is uncertain, raise it as an issue instead of a missing document.
 - If a confirmed document appears insufficient or incomplete, raise it as an issue with appropriate severity instead.
-- Limit missingDocs to documents under "Not yet confirmed" that are genuinely required for this permit type.`;
+- Limit missingDocs to documents under "Not yet confirmed" that are genuinely required for this permit type.
+- When listing a missing document that corresponds to an item in the "Not yet confirmed" list, use that item's exact wording verbatim. Do not rephrase, abbreviate, or expand it. This ensures consistent tracking across review revisions.`;
 }
 
 function buildUserMessage(input: ReviewInput): string {
@@ -171,6 +173,16 @@ function buildUserMessage(input: ReviewInput): string {
         .map((a) => a.fileName)
         .join(", ");
       lines.push(`  - ${doc} → ${files}`);
+    }
+  }
+
+  if (coverage.likelyCovered.length > 0) {
+    lines.push(
+      ``,
+      `Likely covered by attached bundle (not individually confirmed — do NOT list in missingDocs; raise as an issue if sufficiency is uncertain):`
+    );
+    for (const lc of coverage.likelyCovered) {
+      lines.push(`  - ${lc.docLabel} → implied by ${lc.impliedBy.join(", ")}`);
     }
   }
 
