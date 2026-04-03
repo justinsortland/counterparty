@@ -390,18 +390,25 @@ function ReviewDeltaSection({
               </ul>
             </div>
           )}
-          {(delta.docsResolved.length > 0 || delta.docsAdded.length > 0) && (
+          {delta.docsResolved.length > 0 && (
             <div>
-              <p className="mb-1 text-xs font-medium text-zinc-500">Missing documents</p>
+              <p className="mb-1 text-xs font-medium text-green-700">Resolved documents</p>
               <ul className="space-y-0.5">
                 {delta.docsResolved.map((doc, i) => (
-                  <li key={`r-${i}`} className="flex items-start gap-1.5 text-xs text-zinc-600">
+                  <li key={i} className="flex items-start gap-1.5 text-xs text-zinc-600">
                     <span className="mt-0.5 shrink-0 font-semibold text-green-600">✓</span>
                     {doc}
                   </li>
                 ))}
+              </ul>
+            </div>
+          )}
+          {delta.docsAdded.length > 0 && (
+            <div>
+              <p className="mb-1 text-xs font-medium text-amber-700">Newly missing documents</p>
+              <ul className="space-y-0.5">
                 {delta.docsAdded.map((doc, i) => (
-                  <li key={`a-${i}`} className="flex items-start gap-1.5 text-xs text-zinc-600">
+                  <li key={i} className="flex items-start gap-1.5 text-xs text-zinc-600">
                     <span className="mt-0.5 shrink-0 font-semibold text-amber-600">+</span>
                     {doc}
                   </li>
