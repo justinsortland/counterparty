@@ -105,7 +105,7 @@ Your job is to review a ${PERMIT_TYPE_LABELS[permitType]} permit application and
 
 Cite applicable code sections when you are confident (e.g. "CBC Section 1030.2", "IRC R302.1"). Only cite codes you know. Use null for codeReference if unsure — do not fabricate references.
 
-Respond with a single JSON object only. No markdown. No prose before or after. Exactly this schema:
+Respond with a single JSON object only. No markdown. No code fences. No commentary before or after the JSON object. Exactly this schema:
 
 {
   "verdict": "LIKELY_APPROVE" | "CONDITIONAL" | "LIKELY_REJECT",
@@ -283,6 +283,15 @@ const MOCK_RESULT: ReviewResult = {
 };
 
 // ---------------------------------------------------------------------------
+// Strip markdown code fence if the model wraps its response anyway
+// ---------------------------------------------------------------------------
+
+function stripFence(text: string): string {
+  const fenced = text.trim().match(/^```(?:json)?\s*([\s\S]*?)\s*```$/);
+  return fenced ? fenced[1] : text.trim();
+}
+
+// ---------------------------------------------------------------------------
 // Main export
 // ---------------------------------------------------------------------------
 
@@ -309,12 +318,14 @@ export async function runReview(input: ReviewInput): Promise<ReviewResult> {
     throw new Error("Review parsing failed: unexpected content block type");
   }
 
+  const rawText = stripFence(block.text);
+
   let parsed: unknown;
   try {
-    parsed = JSON.parse(block.text);
+    parsed = JSON.parse(rawText);
   } catch {
     throw new Error(
-      `Review parsing failed: invalid JSON — ${block.text.slice(0, 200)}`
+      `Review parsing failed: invalid JSON — ${rawText.slice(0, 200)}`
     );
   }
 

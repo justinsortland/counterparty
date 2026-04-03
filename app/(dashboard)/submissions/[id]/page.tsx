@@ -11,6 +11,7 @@ import { UploadButton } from "./_components/upload-button";
 import { LabelSelect } from "./_components/label-select";
 import { selectProfile } from "@/lib/ai/review-profiles";
 import { computeCoverage } from "@/lib/ai/document-coverage";
+import { computeDelta } from "@/lib/ai/review-delta";
 import type { PermitType, ProjectType, SubmissionStatus, ReviewVerdict, IssueSeverity } from "@prisma/client";
 
 // ---------------------------------------------------------------------------
@@ -320,12 +321,108 @@ function ReviewBody({ review }: { review: ReviewRecord }) {
   );
 }
 
+function ReviewDeltaSection({
+  review,
+  previousReview,
+}: {
+  review: ReviewRecord;
+  previousReview: ReviewRecord;
+}) {
+  const delta = computeDelta(review, previousReview);
+
+  return (
+    <div className="mb-4 rounded-lg border border-zinc-100 bg-zinc-50 px-4 py-3">
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">
+        Changes since revision {previousReview.revisionNumber}
+      </p>
+      {!delta.hasChanges ? (
+        <p className="text-xs text-zinc-400">No changes since the previous review.</p>
+      ) : (
+        <div className="space-y-2">
+          {delta.resolved.length > 0 && (
+            <div>
+              <p className="mb-1 text-xs font-medium text-green-700">Resolved</p>
+              <ul className="space-y-0.5">
+                {delta.resolved.map((issue, i) => (
+                  <li key={i} className="flex items-start gap-1.5 text-xs text-zinc-600">
+                    <span className="mt-0.5 shrink-0 font-semibold text-green-600">✓</span>
+                    <span>
+                      <span className="font-medium">{issue.category}</span>
+                      {" — "}
+                      {issue.description}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {delta.introduced.length > 0 && (
+            <div>
+              <p className="mb-1 text-xs font-medium text-red-700">Introduced</p>
+              <ul className="space-y-0.5">
+                {delta.introduced.map((issue, i) => (
+                  <li key={i} className="flex items-start gap-1.5 text-xs text-zinc-600">
+                    <span className="mt-0.5 shrink-0 font-semibold text-red-500">+</span>
+                    <span>
+                      <span className="font-medium">{issue.category}</span>
+                      {" — "}
+                      {issue.description}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {delta.persisted.length > 0 && (delta.resolved.length > 0 || delta.introduced.length > 0) && (
+            <div>
+              <p className="mb-1 text-xs font-medium text-zinc-500">Still present</p>
+              <ul className="space-y-0.5">
+                {delta.persisted.map((issue, i) => (
+                  <li key={i} className="flex items-start gap-1.5 text-xs text-zinc-500">
+                    <span className="mt-0.5 shrink-0">→</span>
+                    <span>
+                      <span className="font-medium">{issue.category}</span>
+                      {" — "}
+                      {issue.description}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {(delta.docsResolved.length > 0 || delta.docsAdded.length > 0) && (
+            <div>
+              <p className="mb-1 text-xs font-medium text-zinc-500">Missing documents</p>
+              <ul className="space-y-0.5">
+                {delta.docsResolved.map((doc, i) => (
+                  <li key={`r-${i}`} className="flex items-start gap-1.5 text-xs text-zinc-600">
+                    <span className="mt-0.5 shrink-0 font-semibold text-green-600">✓</span>
+                    {doc}
+                  </li>
+                ))}
+                {delta.docsAdded.map((doc, i) => (
+                  <li key={`a-${i}`} className="flex items-start gap-1.5 text-xs text-zinc-600">
+                    <span className="mt-0.5 shrink-0 font-semibold text-amber-600">+</span>
+                    {doc}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ReviewCard({
   review,
   isLatest,
+  previousReview,
 }: {
   review: ReviewRecord;
   isLatest: boolean;
+  previousReview?: ReviewRecord;
 }) {
   const header = (
     <div className={`border-l-2 pl-3 ${VERDICT_BORDER[review.verdict]}`}>
@@ -354,6 +451,9 @@ function ReviewCard({
     return (
       <div className="py-5 border-b border-zinc-100 last:border-0">
         <div className="mb-4">{header}</div>
+        {previousReview && (
+          <ReviewDeltaSection review={review} previousReview={previousReview} />
+        )}
         <ReviewBody review={review} />
       </div>
     );
@@ -659,7 +759,11 @@ export default async function SubmissionDetailPage({
             </div>
           ) : (
             <>
-              <ReviewCard review={submission.reviews[0]} isLatest />
+              <ReviewCard
+                review={submission.reviews[0]}
+                isLatest
+                previousReview={submission.reviews[1]}
+              />
               {submission.reviews.slice(1).map((review) => (
                 <ReviewCard key={review.id} review={review} isLatest={false} />
               ))}
