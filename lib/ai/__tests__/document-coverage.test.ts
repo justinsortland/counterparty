@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeCoverage, BUNDLE_IMPLIES } from "../document-coverage";
+import { computeCoverage, canonicalizeMissingDocs, BUNDLE_IMPLIES } from "../document-coverage";
 
 // Exact bundle keys and their first implied subdoc — sourced from BUNDLE_IMPLIES
 // so tests remain coupled to the real mapping, not duplicated strings.
@@ -114,5 +114,79 @@ describe("computeCoverage — narrow doc directly attached stays confirmed", () 
     expect(result.covered).toContain(narrowDoc);
     // Must NOT appear in likelyCovered since it is already confirmed
     expect(result.likelyCovered.map((lc) => lc.docLabel)).not.toContain(narrowDoc);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// canonicalizeMissingDocs
+// ---------------------------------------------------------------------------
+
+describe("canonicalizeMissingDocs", () => {
+  const required = [
+    "Energy compliance forms (Title 24 or local equivalent)",
+    "Dimensioned site plan showing property lines, setbacks, and both structures",
+    "Floor plans with dimensions and room labels",
+    "Soils or geotechnical report",
+  ];
+
+  it("returns a canonical profile string unchanged (exact match)", () => {
+    const result = canonicalizeMissingDocs(
+      ["Energy compliance forms (Title 24 or local equivalent)"],
+      required
+    );
+    expect(result[0]).toBe("Energy compliance forms (Title 24 or local equivalent)");
+  });
+
+  it("canonicalizes a parenthetical variant to the profile string (the energy-compliance bug)", () => {
+    const result = canonicalizeMissingDocs(
+      ["Energy compliance forms (e.g., Title 24 or REScheck)"],
+      required
+    );
+    expect(result[0]).toBe("Energy compliance forms (Title 24 or local equivalent)");
+  });
+
+  it("canonicalizes the longer variant that triggered the bug report", () => {
+    const result = canonicalizeMissingDocs(
+      ["Energy compliance forms (e.g., Title 24 or REScheck/COMcheck depending on occupancy)"],
+      required
+    );
+    expect(result[0]).toBe("Energy compliance forms (Title 24 or local equivalent)");
+  });
+
+  it("preserves free-form items that do not match any profile doc", () => {
+    const result = canonicalizeMissingDocs(["Noise abatement study"], required);
+    expect(result[0]).toBe("Noise abatement study");
+  });
+
+  it("handles a mixed list: canonical docs stabilized, free-form items preserved", () => {
+    const result = canonicalizeMissingDocs(
+      [
+        "Energy compliance forms (e.g., Title 24 or REScheck/COMcheck depending on occupancy)",
+        "Noise abatement study",
+        "Soils or geotechnical report",
+      ],
+      required
+    );
+    expect(result[0]).toBe("Energy compliance forms (Title 24 or local equivalent)");
+    expect(result[1]).toBe("Noise abatement study");
+    expect(result[2]).toBe("Soils or geotechnical report");
+  });
+
+  it("two reviews whose raw AI strings differ both canonicalize to the same string", () => {
+    // Simulates the before/after of two real reviews — if both strings canonicalize
+    // to the same profile string, computeDelta will see no change between revisions.
+    const rev1 = canonicalizeMissingDocs(
+      ["Energy compliance forms (e.g., Title 24 or REScheck)"],
+      required
+    );
+    const rev2 = canonicalizeMissingDocs(
+      ["Energy compliance forms (e.g., Title 24 or REScheck/COMcheck depending on occupancy)"],
+      required
+    );
+    expect(rev1[0]).toBe(rev2[0]);
+  });
+
+  it("returns an empty array when given an empty array", () => {
+    expect(canonicalizeMissingDocs([], required)).toEqual([]);
   });
 });

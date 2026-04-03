@@ -62,6 +62,54 @@ export const BUNDLE_IMPLIES: Record<string, string[]> = {
 };
 
 // ---------------------------------------------------------------------------
+// canonicalizeMissingDocs
+//
+// Replaces each emitted missingDoc string with the verbatim required-document
+// label from the profile when the two strings share the same base label (text
+// before the first parenthesis). This prevents different phrasings of the
+// same required doc from being stored across revisions, which would produce
+// false "resolved / newly missing" deltas.
+//
+// Strings that do not match any required document are returned unchanged so
+// that free-form reviewer observations are preserved as-is.
+// ---------------------------------------------------------------------------
+
+function normalizeBase(s: string): string {
+  // Strip parenthetical suffix, lowercase, collapse whitespace.
+  // "Energy compliance forms (e.g., Title 24 or REScheck)" → "energy compliance forms"
+  return s.split("(")[0].trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+export function canonicalizeMissingDocs(
+  docs: string[],
+  requiredDocuments: string[]
+): string[] {
+  const exactMap = new Map<string, string>(); // normalized full string → canonical
+  const baseMap = new Map<string, string>();  // base label → canonical
+
+  for (const req of requiredDocuments) {
+    const norm = req.trim().toLowerCase().replace(/\s+/g, " ");
+    if (!exactMap.has(norm)) exactMap.set(norm, req);
+
+    const base = normalizeBase(req);
+    if (base && !baseMap.has(base)) baseMap.set(base, req);
+  }
+
+  return docs.map((doc) => {
+    const norm = doc.trim().toLowerCase().replace(/\s+/g, " ");
+
+    // 1. Exact normalized match
+    if (exactMap.has(norm)) return exactMap.get(norm)!;
+
+    // 2. Base-label match — handles parenthetical variants
+    const base = normalizeBase(doc);
+    if (base && baseMap.has(base)) return baseMap.get(base)!;
+
+    return doc;
+  });
+}
+
+// ---------------------------------------------------------------------------
 // computeCoverage
 // ---------------------------------------------------------------------------
 

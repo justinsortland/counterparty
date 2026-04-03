@@ -1,14 +1,14 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { IssueSeverity, PermitType, ProjectType, ReviewVerdict } from "@prisma/client";
 import type { ReviewProfile } from "./review-profiles";
-import { computeCoverage } from "./document-coverage";
+import { computeCoverage, canonicalizeMissingDocs } from "./document-coverage";
 
 // ---------------------------------------------------------------------------
 // Provenance constants — bump PROMPT_VERSION whenever the prompt changes
 // ---------------------------------------------------------------------------
 
 export const REVIEW_MODEL = process.env.REVIEW_MODEL ?? "claude-sonnet-4-6";
-export const PROMPT_VERSION = "v4";
+export const PROMPT_VERSION = "v5";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -342,5 +342,9 @@ export async function runReview(input: ReviewInput): Promise<ReviewResult> {
   }
 
   console.log("[reviewer] Anthropic response parsed successfully");
-  return validateAndNormalize(parsed);
+  const result = validateAndNormalize(parsed);
+  return {
+    ...result,
+    missingDocs: canonicalizeMissingDocs(result.missingDocs, input.profile.requiredDocuments),
+  };
 }
