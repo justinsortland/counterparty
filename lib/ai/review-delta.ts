@@ -33,6 +33,45 @@ function issueKey(i: DeltaIssue): string {
 }
 
 // ---------------------------------------------------------------------------
+// Document family matching
+// ---------------------------------------------------------------------------
+
+const FAMILY_PATTERNS: { key: string; pattern: RegExp }[] = [
+  { key: "site-plan",           pattern: /\bsite plan\b/ },
+  { key: "floor-plan",          pattern: /\bfloor plan\b/ },
+  { key: "electrical-plan",     pattern: /\belectrical plan\b/ },
+  { key: "panel-schedule",      pattern: /\bpanel schedule\b/ },
+  { key: "single-line-diagram", pattern: /\bsingle.?line diagram\b/ },
+  { key: "structural-calc",     pattern: /\bstructural calc/ },
+  { key: "plumbing-plan",       pattern: /\bplumbing plan\b/ },
+  { key: "mechanical-plan",     pattern: /\bmechanical plan\b/ },
+];
+
+function docFamilyKey(s: string): string {
+  const norm = normalizeStr(s);
+  for (const { key, pattern } of FAMILY_PATTERNS) {
+    if (pattern.test(norm)) return key;
+  }
+  return norm;
+}
+
+/**
+ * Build a map from family key → longest (most specific) original string.
+ * When multiple strings share a family, the longest one is the representative.
+ */
+function buildDocFamilyMap(docs: string[]): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const d of docs) {
+    const key = docFamilyKey(d);
+    const existing = map.get(key);
+    if (!existing || d.length > existing.length) {
+      map.set(key, d);
+    }
+  }
+  return map;
+}
+
+// ---------------------------------------------------------------------------
 // computeDelta
 // ---------------------------------------------------------------------------
 
@@ -48,12 +87,19 @@ export function computeDelta(
   const persisted: DeltaIssue[] = latest.issues.filter((i) => prevKeys.has(issueKey(i)));
   const introduced: DeltaIssue[] = latest.issues.filter((i) => !prevKeys.has(issueKey(i)));
 
-  // Missing docs — normalize for comparison, keep original strings for display
-  const prevDocsNorm = new Map(previous.missingDocs.map((d) => [normalizeStr(d), d]));
-  const latestDocsNorm = new Map(latest.missingDocs.map((d) => [normalizeStr(d), d]));
+  // Missing docs — family-aware matching, longest string as representative
+  const prevFamilyMap = buildDocFamilyMap(previous.missingDocs);
+  const latestFamilyMap = buildDocFamilyMap(latest.missingDocs);
 
-  const docsResolved = previous.missingDocs.filter((d) => !latestDocsNorm.has(normalizeStr(d)));
-  const docsAdded = latest.missingDocs.filter((d) => !prevDocsNorm.has(normalizeStr(d)));
+  const docsResolved: string[] = [];
+  for (const [key, repr] of prevFamilyMap) {
+    if (!latestFamilyMap.has(key)) docsResolved.push(repr);
+  }
+
+  const docsAdded: string[] = [];
+  for (const [key, repr] of latestFamilyMap) {
+    if (!prevFamilyMap.has(key)) docsAdded.push(repr);
+  }
 
   const hasChanges =
     resolved.length > 0 ||
