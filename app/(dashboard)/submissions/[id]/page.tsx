@@ -10,6 +10,7 @@ import { buttonVariants } from "@/lib/button-variants";
 import { UploadButton } from "./_components/upload-button";
 import { LabelSelect } from "./_components/label-select";
 import { DeleteButton } from "../_components/delete-button";
+import { DuplicateButton } from "../_components/duplicate-button";
 import { selectProfile } from "@/lib/ai/review-profiles";
 import { computeCoverage } from "@/lib/ai/document-coverage";
 import { computeDelta } from "@/lib/ai/review-delta";
@@ -594,6 +595,7 @@ export default async function SubmissionDetailPage({
             >
               Edit
             </Link>
+            <DuplicateButton submissionId={submission.id} />
             <DeleteButton submissionId={submission.id} title={submission.title} />
           </div>
         </div>

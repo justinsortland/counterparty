@@ -9,6 +9,53 @@ import { db } from "@/lib/db";
 
 const BUCKET = "artifacts";
 
+export async function duplicateSubmission(formData: FormData): Promise<void> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const workspaceId = await getWorkspaceId(user.id);
+  const submissionId = (formData.get("submissionId") as string)?.trim();
+  if (!submissionId) redirect("/submissions");
+
+  const source = await db.submission.findFirst({
+    where: { id: submissionId, workspaceId },
+    select: {
+      title: true,
+      address: true,
+      jurisdiction: true,
+      permitType: true,
+      projectType: true,
+      scopeOfWork: true,
+      reviewContext: true,
+    },
+  });
+  if (!source) redirect("/submissions");
+
+  const baseTitle = source.title?.trim() || "Untitled submission";
+  const newTitle = `${baseTitle} (Copy)`;
+
+  const created = await db.submission.create({
+    data: {
+      workspaceId,
+      title: newTitle,
+      address: source.address,
+      jurisdiction: source.jurisdiction,
+      permitType: source.permitType,
+      projectType: source.projectType,
+      scopeOfWork: source.scopeOfWork,
+      reviewContext: source.reviewContext,
+      status: "DRAFT",
+    },
+    select: { id: true },
+  });
+
+  revalidatePath("/submissions");
+  redirect(`/submissions/${created.id}`);
+}
+
 export async function deleteSubmission(formData: FormData): Promise<void> {
   const supabase = await createClient();
   const {

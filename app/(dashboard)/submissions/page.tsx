@@ -5,6 +5,7 @@ import { getWorkspaceId } from "@/lib/workspace";
 import { db } from "@/lib/db";
 import { buttonVariants } from "@/lib/button-variants";
 import { DeleteButton } from "./_components/delete-button";
+import { DuplicateButton } from "./_components/duplicate-button";
 import { FilterBar } from "./_components/filter-bar";
 import type { PermitType, ProjectType, SubmissionStatus } from "@prisma/client";
 
@@ -236,7 +237,10 @@ export default async function SubmissionsPage({
                     {formatDate(s.updatedAt)}
                   </td>
                   <td className={`${TD} text-right`}>
-                    <DeleteButton submissionId={s.id} title={s.title} returnTo={returnTo} />
+                    <div className="flex items-center justify-end gap-3">
+                      <DuplicateButton submissionId={s.id} />
+                      <DeleteButton submissionId={s.id} title={s.title} returnTo={returnTo} />
+                    </div>
                   </td>
                 </tr>
               ))}
