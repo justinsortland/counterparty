@@ -9,7 +9,7 @@ import { uploadArtifact, deleteArtifact, labelArtifact } from "@/lib/actions/art
 import { buttonVariants } from "@/lib/button-variants";
 import { UploadButton } from "./_components/upload-button";
 import { LabelSelect } from "./_components/label-select";
-import { DeleteButton } from "./_components/delete-button";
+import { DeleteButton } from "../_components/delete-button";
 import { selectProfile } from "@/lib/ai/review-profiles";
 import { computeCoverage } from "@/lib/ai/document-coverage";
 import { computeDelta } from "@/lib/ai/review-delta";
@@ -594,7 +594,7 @@ export default async function SubmissionDetailPage({
             >
               Edit
             </Link>
-            <DeleteButton submissionId={submission.id} />
+            <DeleteButton submissionId={submission.id} title={submission.title} />
           </div>
         </div>
       </div>

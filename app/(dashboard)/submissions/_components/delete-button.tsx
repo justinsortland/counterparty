@@ -3,11 +3,18 @@
 import { useTransition } from "react";
 import { deleteSubmission } from "@/lib/actions/submission";
 
-export function DeleteButton({ submissionId }: { submissionId: string }) {
+export function DeleteButton({
+  submissionId,
+  title,
+}: {
+  submissionId: string;
+  title?: string;
+}) {
   const [isPending, startTransition] = useTransition();
 
   function handleClick() {
-    if (!confirm("Permanently delete this submission and all its data? This cannot be undone.")) {
+    const label = title ? `Delete submission "${title}"?` : "Permanently delete this submission and all its data?";
+    if (!confirm(`${label}\n\nThis cannot be undone.`)) {
       return;
     }
     const formData = new FormData();

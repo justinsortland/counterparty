@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getWorkspaceId } from "@/lib/workspace";
 import { db } from "@/lib/db";
 import { buttonVariants } from "@/lib/button-variants";
+import { DeleteButton } from "./_components/delete-button";
 import type { PermitType, ProjectType, SubmissionStatus } from "@prisma/client";
 
 // ---------------------------------------------------------------------------
@@ -127,6 +128,7 @@ export default async function SubmissionsPage() {
                 <th className={TH}>Project Type</th>
                 <th className={TH}>Status</th>
                 <th className={TH}>Updated</th>
+                <th className={TH}><span className="sr-only">Actions</span></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100 bg-white">
@@ -160,6 +162,9 @@ export default async function SubmissionsPage() {
                   </td>
                   <td className={`${TD} text-zinc-400`}>
                     {formatDate(s.updatedAt)}
+                  </td>
+                  <td className={`${TD} text-right`}>
+                    <DeleteButton submissionId={s.id} title={s.title} />
                   </td>
                 </tr>
               ))}
