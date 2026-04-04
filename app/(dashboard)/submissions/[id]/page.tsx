@@ -9,6 +9,7 @@ import { uploadArtifact, deleteArtifact, labelArtifact } from "@/lib/actions/art
 import { buttonVariants } from "@/lib/button-variants";
 import { UploadButton } from "./_components/upload-button";
 import { LabelSelect } from "./_components/label-select";
+import { DeleteButton } from "./_components/delete-button";
 import { selectProfile } from "@/lib/ai/review-profiles";
 import { computeCoverage } from "@/lib/ai/document-coverage";
 import { computeDelta } from "@/lib/ai/review-delta";
@@ -586,12 +587,15 @@ export default async function SubmissionDetailPage({
             </div>
             <p className="mt-1 text-sm text-zinc-400">{submission.address}</p>
           </div>
-          <Link
-            href={`/submissions/${submission.id}/edit`}
-            className={buttonVariants({ variant: "ghost", size: "sm" })}
-          >
-            Edit
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href={`/submissions/${submission.id}/edit`}
+              className={buttonVariants({ variant: "ghost", size: "sm" })}
+            >
+              Edit
+            </Link>
+            <DeleteButton submissionId={submission.id} />
+          </div>
         </div>
       </div>
 
