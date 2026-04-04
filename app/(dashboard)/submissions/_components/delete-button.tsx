@@ -6,9 +6,11 @@ import { deleteSubmission } from "@/lib/actions/submission";
 export function DeleteButton({
   submissionId,
   title,
+  returnTo,
 }: {
   submissionId: string;
   title?: string;
+  returnTo?: string;
 }) {
   const [isPending, startTransition] = useTransition();
 
@@ -19,6 +21,7 @@ export function DeleteButton({
     }
     const formData = new FormData();
     formData.set("submissionId", submissionId);
+    if (returnTo) formData.set("returnTo", returnTo);
     startTransition(() => deleteSubmission(formData));
   }
 

@@ -45,5 +45,7 @@ export async function deleteSubmission(formData: FormData): Promise<void> {
   ]);
 
   revalidatePath("/submissions");
-  redirect("/submissions");
+  const rawReturnTo = (formData.get("returnTo") as string | null)?.trim() ?? "";
+  const returnTo = rawReturnTo.startsWith("/submissions") ? rawReturnTo : "/submissions";
+  redirect(returnTo);
 }
