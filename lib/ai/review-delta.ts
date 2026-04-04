@@ -157,6 +157,17 @@ function issueTopicKey(issue: DeltaIssue): { key: string; classified: boolean } 
 
 function issueHasMatchIn(issue: DeltaIssue, candidates: DeltaIssue[]): boolean {
   const { key: topicKey, classified: isClassified } = issueTopicKey(issue);
+
+  // Missing-docs family: the model non-deterministically uses either a broad umbrella
+  // issue ("No documents of any kind…") or per-domain children ("Missing Documents —
+  // Structural", etc.) to express the same underlying fact. Token overlap cannot bridge
+  // the semantic gap between umbrella and child descriptions, so we treat family
+  // presence alone as sufficient: any missing-docs issue on one side matches any
+  // missing-docs issue on the other side.
+  if (isClassified && topicKey === "missing-docs") {
+    return candidates.some((c) => issueTopicKey(c).key === "missing-docs");
+  }
+
   // When classified, description token overlap is the sole guard against
   // over-merging — the code-body guard is disabled so that IBC↔CBC model
   // variance does not produce false churn for well-known missing-document issues.

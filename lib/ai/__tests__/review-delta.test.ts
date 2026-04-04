@@ -467,6 +467,83 @@ describe("computeDelta — issueTopicKey: description fallback (regression)", ()
     expect(r.introduced).toHaveLength(0);
   });
 
+  // ---
+  // missing-docs family: umbrella ↔ children (the real failure mode)
+  // ---
+
+  it("treats specific missing-doc children as persisted when review collapses them into one umbrella", () => {
+    // Review 1: six per-domain children. Review 2: one broad umbrella.
+    // This is the exact production failure: token overlap cannot bridge the gap.
+    const children = [
+      issue({ category: "Missing Documents — Full Plan Set",       description: "No architectural drawings have been submitted. For new construction, a complete plan set including a site plan, floor plans, elevations, and sections is required.", codeReference: null }),
+      issue({ category: "Missing Documents — Structural",          description: "No structural drawings or calculations have been submitted. New construction requires engineered structural documents demonstrating gravity and lateral compliance.", codeReference: null }),
+      issue({ category: "Missing Documents — Geotechnical",        description: "No soils or geotechnical report has been submitted. Foundation design for new construction must be based on a site-specific geotechnical investigation.", codeReference: null }),
+      issue({ category: "Missing Documents — Energy Compliance",   description: "No energy compliance documentation has been submitted. New construction requires Title 24 compliance forms or equivalent jurisdiction documentation.", codeReference: null }),
+      issue({ category: "Missing Documents — Grading and Drainage",description: "No grading and drainage plan has been submitted. New construction requires site grading and drainage documentation to demonstrate stormwater management.", codeReference: null }),
+      issue({ category: "Missing Documents — Trades",              description: "No electrical, plumbing, or mechanical plans or deferred submittal letters have been provided. All trade systems must either be designed or deferred.", codeReference: null }),
+    ];
+    const umbrella = issue({
+      category: "Missing Documents",
+      description: "No documents of any kind have been confirmed attached to this application. A full plan set including architectural, structural, civil/grading, and MEP plans is required before review can proceed.",
+      codeReference: null,
+    });
+    const r = issueDelta([umbrella], children);
+    expect(r.resolved).toHaveLength(0);
+    expect(r.introduced).toHaveLength(0);
+    expect(r.persisted).toHaveLength(1);
+  });
+
+  it("treats umbrella as persisted when review expands it into specific children (inverse direction)", () => {
+    // R1: umbrella only. R2: specific children only.
+    const umbrella = issue({
+      category: "Missing Documents",
+      description: "No documents of any kind have been confirmed attached to this application. A full plan set including architectural, structural, civil/grading, and MEP plans is required.",
+      codeReference: null,
+    });
+    const children = [
+      issue({ category: "Missing Documents — Structural",        description: "No structural drawings or calculations have been submitted. Engineered documents are required.", codeReference: null }),
+      issue({ category: "Missing Documents — Geotechnical",      description: "No soils or geotechnical report has been submitted. Foundation design must be based on a site-specific investigation.", codeReference: null }),
+      issue({ category: "Missing Documents — Energy Compliance", description: "No energy compliance documentation has been submitted. Title 24 forms or equivalent are required.", codeReference: null }),
+    ];
+    const r = issueDelta(children, [umbrella]);
+    expect(r.resolved).toHaveLength(0);
+    expect(r.introduced).toHaveLength(0);
+    expect(r.persisted).toHaveLength(3);
+  });
+
+  it("umbrella plus children in R1, umbrella only in R2 — still 0 resolved", () => {
+    const umbrella = issue({
+      category: "Missing Documents",
+      description: "No documents of any kind have been confirmed attached. A full plan set is required.",
+      codeReference: null,
+    });
+    const children = [
+      issue({ category: "Missing Documents — Structural",   description: "No structural drawings submitted. Engineered documents required.", codeReference: null }),
+      issue({ category: "Missing Documents — Geotechnical", description: "No soils report submitted. Foundation design requires geotechnical investigation.", codeReference: null }),
+    ];
+    const r = issueDelta([umbrella], [umbrella, ...children]);
+    expect(r.resolved).toHaveLength(0);
+    expect(r.introduced).toHaveLength(0);
+  });
+
+  it("missing-docs issues all resolve correctly when the family disappears entirely", () => {
+    // R2 has zero missing-docs issues — family gone — everything in R1 is truly resolved.
+    const umbrella = issue({
+      category: "Missing Documents",
+      description: "No documents of any kind have been confirmed attached to this application.",
+      codeReference: null,
+    });
+    const child = issue({
+      category: "Missing Documents — Structural",
+      description: "No structural drawings submitted. Engineered documents required.",
+      codeReference: null,
+    });
+    const r = issueDelta([], [umbrella, child]);
+    expect(r.resolved).toHaveLength(2);
+    expect(r.introduced).toHaveLength(0);
+    expect(r.persisted).toHaveLength(0);
+  });
+
   it("matches 'No Documents Submitted' to 'Missing Documents' via missing-docs family", () => {
     // Both are broad document-absence summaries. Without the missing-docs family entry,
     // the description fallback misclassifies them into different families (structural vs
