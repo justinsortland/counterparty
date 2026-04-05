@@ -23,7 +23,7 @@ export default async function DashboardLayout({
   return (
     <div className="flex h-screen overflow-hidden bg-white">
       {/* Sidebar */}
-      <aside className="flex w-[220px] shrink-0 flex-col border-r border-zinc-100 bg-white">
+      <aside className="flex w-[220px] shrink-0 flex-col border-r border-zinc-100 bg-white print:hidden">
         {/* Wordmark */}
         <div className="flex h-14 items-center border-b border-zinc-100 px-4">
           <span className="text-sm font-semibold tracking-tight text-zinc-900">

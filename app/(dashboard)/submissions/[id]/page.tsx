@@ -601,6 +601,14 @@ export default async function SubmissionDetailPage({
               submissionId={submission.id}
               defaultName={submission.title}
             />
+            {submission.reviews.length > 0 && (
+              <Link
+                href={`/submissions/${submission.id}/report`}
+                className="text-sm text-zinc-500 hover:text-zinc-700"
+              >
+                Print report
+              </Link>
+            )}
             <DeleteButton submissionId={submission.id} title={submission.title} />
           </div>
         </div>
