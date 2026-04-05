@@ -110,12 +110,20 @@ export default async function SubmissionsPage({
     <div className="p-8">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-lg font-semibold text-zinc-900">Submissions</h1>
-        <Link
-          href="/submissions/new"
-          className={buttonVariants({ size: "sm" })}
-        >
-          + New Submission
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/submissions/templates"
+            className={buttonVariants({ variant: "ghost", size: "sm" })}
+          >
+            Templates
+          </Link>
+          <Link
+            href="/submissions/new"
+            className={buttonVariants({ size: "sm" })}
+          >
+            + New Submission
+          </Link>
+        </div>
       </div>
 
       <FilterBar />

@@ -71,6 +71,7 @@ model Workspace {
   submissions Submission[]
   reviews     Review[]
   artifacts   Artifact[]
+  templates   SubmissionTemplate[]
 
   @@map("workspaces")
 }
@@ -202,4 +203,27 @@ model ReviewIssue {
 
   @@index([reviewId])
   @@map("review_issues")
+}
+
+// ---------------------------------------------------------------------------
+// Submission Templates — reusable starting points for new submissions
+// ---------------------------------------------------------------------------
+
+model SubmissionTemplate {
+  id            String      @id @default(cuid())
+  workspaceId   String
+  name          String
+  permitType    PermitType
+  projectType   ProjectType
+  address       String
+  jurisdiction  String
+  scopeOfWork   String
+  reviewContext String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
+
+  @@index([workspaceId])
+  @@map("submission_templates")
 }
