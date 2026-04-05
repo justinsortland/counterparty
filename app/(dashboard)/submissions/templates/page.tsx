@@ -4,7 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getWorkspaceId } from "@/lib/workspace";
 import { db } from "@/lib/db";
 import { buttonVariants } from "@/lib/button-variants";
-import { createFromTemplate, deleteTemplate } from "@/lib/actions/template";
+import { createFromTemplate } from "@/lib/actions/template";
+import { DeleteTemplateButton } from "./_components/delete-template-button";
 import type { PermitType, ProjectType } from "@prisma/client";
 
 const PERMIT_TYPE_LABELS: Record<PermitType, string> = {
@@ -119,15 +120,7 @@ export default async function TemplatesPage() {
                           Use
                         </button>
                       </form>
-                      <form action={deleteTemplate}>
-                        <input type="hidden" name="templateId" value={t.id} />
-                        <button
-                          type="submit"
-                          className="text-sm text-red-400 hover:text-red-600"
-                        >
-                          Delete
-                        </button>
-                      </form>
+                      <DeleteTemplateButton templateId={t.id} templateName={t.name} />
                     </div>
                   </td>
                 </tr>
