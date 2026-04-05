@@ -9,6 +9,45 @@ import { db } from "@/lib/db";
 
 const BUCKET = "artifacts";
 
+export async function deleteSubmissions(ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const workspaceId = await getWorkspaceId(user.id);
+
+  // Only operate on submissions owned by this workspace
+  const owned = await db.submission.findMany({
+    where: { id: { in: ids }, workspaceId },
+    select: {
+      id: true,
+      artifacts: { select: { storagePath: true } },
+    },
+  });
+  if (owned.length === 0) return;
+
+  const validIds = owned.map((s) => s.id);
+  const storagePaths = owned.flatMap((s) => s.artifacts.map((a) => a.storagePath));
+
+  if (storagePaths.length > 0) {
+    const adminClient = createAdminClient();
+    await adminClient.storage.from(BUCKET).remove(storagePaths).catch(() => {});
+  }
+
+  await db.$transaction([
+    db.reviewIssue.deleteMany({ where: { review: { submissionId: { in: validIds } } } }),
+    db.review.deleteMany({ where: { submissionId: { in: validIds } } }),
+    db.artifact.deleteMany({ where: { submissionId: { in: validIds } } }),
+    db.submission.deleteMany({ where: { id: { in: validIds } } }),
+  ]);
+
+  revalidatePath("/submissions");
+}
+
 export async function duplicateSubmission(formData: FormData): Promise<void> {
   const supabase = await createClient();
   const {
