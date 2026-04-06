@@ -4,15 +4,30 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { createSubmission, type CreateSubmissionState } from "./actions";
 import { buttonVariants } from "@/lib/button-variants";
-import { SubmissionFields } from "../_components/submission-fields";
+import {
+  SubmissionFields,
+  type SubmissionDefaultValues,
+} from "../_components/submission-fields";
 
-export function SubmissionForm() {
+export function SubmissionForm({
+  defaultValues,
+}: {
+  defaultValues?: SubmissionDefaultValues;
+}) {
   const [state, formAction, isPending] = useActionState<
     CreateSubmissionState,
     FormData
   >(createSubmission, null);
 
   const errors = state?.errors ?? {};
+
+  // Submitted values from a failed attempt take priority over template defaults.
+  const displayValues = state?.values ?? defaultValues;
+
+  // Key over all displayed fields so SubmissionFields remounts — and re-applies
+  // defaultValue — whenever the visible data set changes (template switch or
+  // validation round-trip returning different values).
+  const fieldsKey = JSON.stringify(displayValues ?? null);
 
   return (
     <form action={formAction} className="space-y-5">
@@ -22,7 +37,7 @@ export function SubmissionForm() {
         </p>
       )}
 
-      <SubmissionFields errors={errors} />
+      <SubmissionFields key={fieldsKey} defaultValues={displayValues} errors={errors} />
 
       <div className="flex items-center justify-end gap-3 pt-2">
         <Link

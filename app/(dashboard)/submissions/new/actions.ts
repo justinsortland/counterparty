@@ -10,7 +10,20 @@ type FormErrors = Partial<
   Record<"title" | "address" | "jurisdiction" | "permitType" | "projectType" | "scopeOfWork" | "form", string>
 >;
 
-export type CreateSubmissionState = { errors: FormErrors } | null;
+export type SubmittedValues = {
+  title: string;
+  address: string;
+  jurisdiction: string;
+  permitType: string;
+  projectType: string;
+  scopeOfWork: string;
+  reviewContext: string;
+};
+
+export type CreateSubmissionState = {
+  errors: FormErrors;
+  values: SubmittedValues;
+} | null;
 
 const VALID_PERMIT_TYPES = Object.values(PermitType);
 const VALID_PROJECT_TYPES = Object.values(ProjectType);
@@ -46,7 +59,20 @@ export async function createSubmission(
     errors.projectType = "Project type is required.";
   if (!scopeOfWork) errors.scopeOfWork = "Scope of work is required.";
 
-  if (Object.keys(errors).length > 0) return { errors };
+  if (Object.keys(errors).length > 0) {
+    return {
+      errors,
+      values: {
+        title: title ?? "",
+        address: address ?? "",
+        jurisdiction: jurisdiction ?? "",
+        permitType: (permitType as string) ?? "",
+        projectType: (projectType as string) ?? "",
+        scopeOfWork: scopeOfWork ?? "",
+        reviewContext: reviewContext ?? "",
+      },
+    };
+  }
 
   let submissionId: string;
 
