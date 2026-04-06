@@ -56,9 +56,11 @@ function FieldError({ message }: { message?: string }) {
 export function SubmissionFields({
   defaultValues,
   errors,
+  hideTitle,
 }: {
   defaultValues?: SubmissionDefaultValues;
   errors?: SubmissionFieldErrors;
+  hideTitle?: boolean;
 }) {
   const e = errors ?? {};
   const d = defaultValues ?? {};
@@ -66,24 +68,26 @@ export function SubmissionFields({
   return (
     <>
       {/* Title */}
-      <div>
-        <label htmlFor="title" className={labelClass}>
-          Title <span className="text-red-500">*</span>
-        </label>
-        <input
-          id="title"
-          name="title"
-          type="text"
-          required
-          defaultValue={d.title}
-          placeholder="e.g. Kitchen remodel at 123 Main St"
-          className={cn(
-            inputClass,
-            e.title && "border-red-300 focus:border-red-400 focus:ring-red-100"
-          )}
-        />
-        <FieldError message={e.title} />
-      </div>
+      {!hideTitle && (
+        <div>
+          <label htmlFor="title" className={labelClass}>
+            Title <span className="text-red-500">*</span>
+          </label>
+          <input
+            id="title"
+            name="title"
+            type="text"
+            required
+            defaultValue={d.title}
+            placeholder="e.g. Kitchen remodel at 123 Main St"
+            className={cn(
+              inputClass,
+              e.title && "border-red-300 focus:border-red-400 focus:ring-red-100"
+            )}
+          />
+          <FieldError message={e.title} />
+        </div>
+      )}
 
       {/* Address */}
       <div>

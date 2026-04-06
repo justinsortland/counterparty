@@ -120,6 +120,12 @@ export default async function TemplatesPage() {
                           Use
                         </button>
                       </form>
+                      <Link
+                        href={`/submissions/templates/${t.id}/edit`}
+                        className="text-sm text-zinc-500 hover:text-zinc-700"
+                      >
+                        Edit
+                      </Link>
                       <DeleteTemplateButton templateId={t.id} templateName={t.name} />
                     </div>
                   </td>

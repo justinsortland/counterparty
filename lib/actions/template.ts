@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { PermitType, ProjectType } from "@prisma/client";
 import { createClient } from "@/lib/supabase/server";
 import { getWorkspaceId } from "@/lib/workspace";
 import { db } from "@/lib/db";
@@ -116,6 +117,83 @@ export async function createFromTemplate(formData: FormData): Promise<void> {
   revalidatePath("/submissions");
   redirect(`/submissions/${created.id}`);
 }
+
+// ---------------------------------------------------------------------------
+// Update
+// ---------------------------------------------------------------------------
+
+type TemplateFieldErrors = Partial<
+  Record<"name" | "address" | "jurisdiction" | "permitType" | "projectType" | "scopeOfWork", string>
+>;
+type UpdateTemplateFormErrors = TemplateFieldErrors & { form?: string };
+export type UpdateTemplateState = { errors: UpdateTemplateFormErrors } | null;
+
+const VALID_PERMIT_TYPES = Object.values(PermitType);
+const VALID_PROJECT_TYPES = Object.values(ProjectType);
+
+export async function updateTemplate(
+  _prevState: UpdateTemplateState,
+  formData: FormData
+): Promise<UpdateTemplateState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const workspaceId = await getWorkspaceId(user.id);
+
+  const templateId = (formData.get("templateId") as string)?.trim();
+  if (!templateId) return { errors: { form: "Missing template ID." } };
+
+  const existing = await db.submissionTemplate.findFirst({
+    where: { id: templateId, workspaceId },
+    select: { id: true },
+  });
+  if (!existing) return { errors: { form: "Template not found." } };
+
+  const rawName = (formData.get("name") as string)?.trim();
+  const baseName = rawName || "Untitled template";
+  const address = (formData.get("address") as string)?.trim();
+  const jurisdiction = (formData.get("jurisdiction") as string)?.trim();
+  const permitType = formData.get("permitType") as PermitType;
+  const projectType = formData.get("projectType") as ProjectType;
+  const scopeOfWork = (formData.get("scopeOfWork") as string)?.trim();
+  const reviewContext = (formData.get("reviewContext") as string)?.trim() || null;
+
+  const errors: UpdateTemplateFormErrors = {};
+  if (!address) errors.address = "Address is required.";
+  if (!jurisdiction) errors.jurisdiction = "Jurisdiction is required.";
+  if (!permitType || !VALID_PERMIT_TYPES.includes(permitType))
+    errors.permitType = "Permit type is required.";
+  if (!projectType || !VALID_PROJECT_TYPES.includes(projectType))
+    errors.projectType = "Project type is required.";
+  if (!scopeOfWork) errors.scopeOfWork = "Scope of work is required.";
+  if (Object.keys(errors).length > 0) return { errors };
+
+  // Dedupe name against all other templates in the workspace (excluding self).
+  const siblings = await db.submissionTemplate.findMany({
+    where: { workspaceId, NOT: { id: templateId } },
+    select: { name: true },
+  });
+  const name = makeUniqueName(baseName, new Set(siblings.map((t) => t.name)));
+
+  try {
+    await db.submissionTemplate.update({
+      where: { id: templateId },
+      data: { name, permitType, projectType, address, jurisdiction, scopeOfWork, reviewContext },
+    });
+  } catch {
+    return { errors: { form: "Something went wrong. Please try again." } };
+  }
+
+  revalidatePath("/submissions/templates");
+  redirect("/submissions/templates");
+}
+
+// ---------------------------------------------------------------------------
+// Delete
+// ---------------------------------------------------------------------------
 
 export async function deleteTemplate(formData: FormData): Promise<void> {
   const workspaceId = await getAuthedWorkspace();
