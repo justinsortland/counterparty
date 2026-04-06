@@ -21,7 +21,7 @@ export default async function DashboardLayout({
   await bootstrapWorkspace(user.id, user.email!, user.user_metadata?.name);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-white">
+    <div className="flex h-screen overflow-hidden bg-white print:h-auto print:overflow-visible">
       {/* Sidebar */}
       <aside className="flex w-[220px] shrink-0 flex-col border-r border-zinc-100 bg-white print:hidden">
         {/* Wordmark */}
@@ -44,7 +44,7 @@ export default async function DashboardLayout({
       </aside>
 
       {/* Main */}
-      <main className="flex flex-1 flex-col overflow-y-auto">
+      <main className="flex flex-1 flex-col overflow-y-auto print:overflow-visible">
         {children}
       </main>
     </div>
