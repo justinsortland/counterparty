@@ -192,6 +192,59 @@ export async function updateTemplate(
 }
 
 // ---------------------------------------------------------------------------
+// Duplicate
+// ---------------------------------------------------------------------------
+
+/**
+ * Strips a trailing " Copy" or " Copy (N)" suffix (case-insensitive) to get
+ * the root name, then appends " Copy".  makeUniqueName handles the rest.
+ *
+ *   "Standard ADU"         → "Standard ADU Copy"
+ *   "Standard ADU Copy"    → "Standard ADU Copy"  (makeUniqueName → "(2)")
+ *   "Standard ADU Copy (2)"→ "Standard ADU Copy"  (makeUniqueName → "(3)")
+ */
+function makeCopyName(name: string): string {
+  const base = name.trim() || "Untitled template";
+  const root = base.replace(/\s+Copy(\s+\(\d+\))?$/i, "");
+  return `${root} Copy`;
+}
+
+export async function duplicateTemplate(formData: FormData): Promise<void> {
+  const workspaceId = await getAuthedWorkspace();
+
+  const templateId = (formData.get("templateId") as string)?.trim();
+  if (!templateId) return;
+
+  const template = await db.submissionTemplate.findFirst({
+    where: { id: templateId, workspaceId },
+  });
+  if (!template) return;
+
+  const baseName = makeCopyName(template.name);
+
+  const existing = await db.submissionTemplate.findMany({
+    where: { workspaceId },
+    select: { name: true },
+  });
+  const name = makeUniqueName(baseName, new Set(existing.map((t) => t.name)));
+
+  await db.submissionTemplate.create({
+    data: {
+      workspaceId,
+      name,
+      permitType: template.permitType,
+      projectType: template.projectType,
+      address: template.address,
+      jurisdiction: template.jurisdiction,
+      scopeOfWork: template.scopeOfWork,
+      reviewContext: template.reviewContext,
+    },
+  });
+
+  revalidatePath("/submissions/templates");
+}
+
+// ---------------------------------------------------------------------------
 // Delete
 // ---------------------------------------------------------------------------
 

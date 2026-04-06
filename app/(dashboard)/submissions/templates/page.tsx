@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getWorkspaceId } from "@/lib/workspace";
 import { db } from "@/lib/db";
 import { buttonVariants } from "@/lib/button-variants";
-import { createFromTemplate } from "@/lib/actions/template";
+import { createFromTemplate, duplicateTemplate } from "@/lib/actions/template";
 import { DeleteTemplateButton } from "./_components/delete-template-button";
 import type { PermitType, ProjectType } from "@prisma/client";
 
@@ -118,6 +118,15 @@ export default async function TemplatesPage() {
                           className="text-sm text-zinc-500 hover:text-zinc-700"
                         >
                           Use
+                        </button>
+                      </form>
+                      <form action={duplicateTemplate}>
+                        <input type="hidden" name="templateId" value={t.id} />
+                        <button
+                          type="submit"
+                          className="text-sm text-zinc-500 hover:text-zinc-700"
+                        >
+                          Duplicate
                         </button>
                       </form>
                       <Link
