@@ -609,6 +609,14 @@ export default async function SubmissionDetailPage({
                 Print report
               </Link>
             )}
+            {submission.reviews.length >= 2 && (
+              <Link
+                href={`/submissions/${submission.id}/compare`}
+                className="text-sm text-zinc-500 hover:text-zinc-700"
+              >
+                Compare revisions
+              </Link>
+            )}
             <DeleteButton submissionId={submission.id} title={submission.title} />
           </div>
         </div>
