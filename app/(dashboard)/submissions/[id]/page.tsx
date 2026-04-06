@@ -429,10 +429,14 @@ function ReviewCard({
   review,
   isLatest,
   previousReview,
+  submissionId,
+  nextRevisionNumber,
 }: {
   review: ReviewRecord;
   isLatest: boolean;
   previousReview?: ReviewRecord;
+  submissionId: string;
+  nextRevisionNumber?: number;
 }) {
   const header = (
     <div className={`border-l-2 pl-3 ${VERDICT_BORDER[review.verdict]}`}>
@@ -493,6 +497,16 @@ function ReviewCard({
       </summary>
       <div className="pb-5">
         <ReviewBody review={review} />
+        {nextRevisionNumber !== undefined && (
+          <div className="mt-3 pt-3 border-t border-zinc-100">
+            <Link
+              href={`/submissions/${submissionId}/compare?from=${review.revisionNumber}&to=${nextRevisionNumber}`}
+              className="text-xs text-zinc-400 hover:text-zinc-600"
+            >
+              Compare rev {review.revisionNumber} → rev {nextRevisionNumber}
+            </Link>
+          </div>
+        )}
       </div>
     </details>
   );
@@ -825,13 +839,34 @@ export default async function SubmissionDetailPage({
             </div>
           ) : (
             <>
+              {submission.reviews.length >= 3 && (() => {
+                const latestRevNum = submission.reviews[0].revisionNumber;
+                const firstRevNum  = submission.reviews[submission.reviews.length - 1].revisionNumber;
+                return (
+                  <div className="py-3 border-b border-zinc-100">
+                    <Link
+                      href={`/submissions/${submission.id}/compare?from=${firstRevNum}&to=${latestRevNum}`}
+                      className="text-xs text-zinc-400 hover:text-zinc-600"
+                    >
+                      Compare rev {firstRevNum} → rev {latestRevNum}
+                    </Link>
+                  </div>
+                );
+              })()}
               <ReviewCard
                 review={submission.reviews[0]}
                 isLatest
                 previousReview={submission.reviews[1]}
+                submissionId={submission.id}
               />
-              {submission.reviews.slice(1).map((review) => (
-                <ReviewCard key={review.id} review={review} isLatest={false} />
+              {submission.reviews.slice(1).map((review, i) => (
+                <ReviewCard
+                  key={review.id}
+                  review={review}
+                  isLatest={false}
+                  submissionId={submission.id}
+                  nextRevisionNumber={submission.reviews[i].revisionNumber}
+                />
               ))}
             </>
           )}
