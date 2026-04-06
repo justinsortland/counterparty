@@ -1,5 +1,7 @@
+import { cache } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getWorkspaceId } from "@/lib/workspace";
 import { db } from "@/lib/db";
@@ -67,25 +69,19 @@ function formatDate(date: Date): string {
 }
 
 // ---------------------------------------------------------------------------
-// Page
+// Data — cached so generateMetadata and the page share one DB round-trip
 // ---------------------------------------------------------------------------
 
-export default async function ReportPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-
+const getReportData = cache(async (id: string) => {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user) return null;
 
   const workspaceId = await getWorkspaceId(user.id);
 
-  const submission = await db.submission.findFirst({
+  return db.submission.findFirst({
     where: { id, workspaceId },
     select: {
       id: true,
@@ -95,7 +91,7 @@ export default async function ReportPage({
       permitType: true,
       projectType: true,
       scopeOfWork: true,
-      // Fetch only the latest review — explicit descending order by revisionNumber
+      // Latest review only — explicit descending order by revisionNumber
       reviews: {
         orderBy: { revisionNumber: "desc" },
         take: 1,
@@ -119,7 +115,45 @@ export default async function ReportPage({
       },
     },
   });
+});
 
+// ---------------------------------------------------------------------------
+// Metadata — sets <title> which becomes the browser's default PDF filename
+// ---------------------------------------------------------------------------
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const submission = await getReportData(id);
+  const review = submission?.reviews[0];
+  if (!submission || !review) return { title: "Review Report" };
+
+  const reviewDate = new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }).format(review.createdAt);
+
+  return {
+    title: `${submission.title} \u2013 Revision ${review.revisionNumber} \u2013 ${reviewDate}`,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Page
+// ---------------------------------------------------------------------------
+
+export default async function ReportPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+
+  const submission = await getReportData(id);
   if (!submission) redirect("/submissions");
 
   const latestReview = submission.reviews[0];
