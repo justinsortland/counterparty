@@ -79,13 +79,6 @@ const CATEGORY_FAMILIES: { key: string; test: (norm: string) => boolean }[] = [
   { key: "application-completeness", test: (n) => /\b(application|scope|jurisdiction)\b/.test(n) },
 ];
 
-function categoryFamilyKey(cat: string): string {
-  const norm = normalizeStr(cat);
-  for (const { key, test } of CATEGORY_FAMILIES) {
-    if (test(norm)) return key;
-  }
-  return norm;
-}
 
 // ---------------------------------------------------------------------------
 // Issue matching — two-tier
