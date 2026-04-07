@@ -7,12 +7,15 @@ import { deleteTemplate } from "@/lib/actions/template";
 export function DeleteTemplateButton({
   templateId,
   templateName,
+  externalDeleting,
 }: {
   templateId: string;
   templateName: string;
+  externalDeleting?: boolean;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const deleting = isPending || externalDeleting;
 
   function handleClick() {
     if (!confirm(`Delete template "${templateName}"?\n\nThis cannot be undone.`)) return;
@@ -28,10 +31,10 @@ export function DeleteTemplateButton({
     <button
       type="button"
       onClick={handleClick}
-      disabled={isPending}
+      disabled={deleting}
       className="text-sm text-red-400 hover:text-red-600 disabled:opacity-40 disabled:cursor-not-allowed"
     >
-      {isPending ? "Deleting…" : "Delete"}
+      {deleting ? "Deleting…" : "Delete"}
     </button>
   );
 }

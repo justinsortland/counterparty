@@ -226,3 +226,14 @@ export async function deleteTemplate(formData: FormData): Promise<void> {
 
   revalidatePath("/submissions/templates");
 }
+
+export async function deleteTemplates(ids: string[]): Promise<void> {
+  const workspaceId = await getAuthedWorkspace();
+  if (!ids.length) return;
+
+  await db.submissionTemplate.deleteMany({
+    where: { id: { in: ids }, workspaceId },
+  });
+
+  revalidatePath("/submissions/templates");
+}
