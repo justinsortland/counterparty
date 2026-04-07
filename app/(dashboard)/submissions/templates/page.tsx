@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getWorkspaceId } from "@/lib/workspace";
 import { db } from "@/lib/db";
 import { buttonVariants } from "@/lib/button-variants";
-import { createFromTemplate, duplicateTemplate } from "@/lib/actions/template";
+import { duplicateTemplate } from "@/lib/actions/template";
 import { DeleteTemplateButton } from "./_components/delete-template-button";
 import type { PermitType, ProjectType } from "@prisma/client";
 
@@ -111,15 +111,12 @@ export default async function TemplatesPage() {
                   <td className={`${TD} text-zinc-400`}>{formatDate(t.createdAt)}</td>
                   <td className={`${TD} text-right`}>
                     <div className="flex items-center justify-end gap-3">
-                      <form action={createFromTemplate}>
-                        <input type="hidden" name="templateId" value={t.id} />
-                        <button
-                          type="submit"
-                          className="text-sm text-zinc-500 hover:text-zinc-700"
-                        >
-                          Use
-                        </button>
-                      </form>
+                      <Link
+                        href={`/submissions/new?template=${t.id}`}
+                        className="text-sm text-zinc-500 hover:text-zinc-700"
+                      >
+                        Use
+                      </Link>
                       <form action={duplicateTemplate}>
                         <input type="hidden" name="templateId" value={t.id} />
                         <button
