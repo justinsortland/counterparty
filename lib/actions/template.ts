@@ -82,42 +82,6 @@ export async function saveAsTemplate(formData: FormData): Promise<void> {
   revalidatePath("/submissions/templates");
 }
 
-export async function createFromTemplate(formData: FormData): Promise<void> {
-  const workspaceId = await getAuthedWorkspace();
-
-  const templateId = (formData.get("templateId") as string)?.trim();
-  if (!templateId) redirect("/submissions/templates");
-
-  const template = await db.submissionTemplate.findFirst({
-    where: { id: templateId, workspaceId },
-  });
-  if (!template) redirect("/submissions/templates");
-
-  const existingSubmissions = await db.submission.findMany({
-    where: { workspaceId },
-    select: { title: true },
-  });
-  const title = makeUniqueName(template.name, new Set(existingSubmissions.map((s) => s.title)));
-
-  const created = await db.submission.create({
-    data: {
-      workspaceId,
-      title,
-      permitType: template.permitType,
-      projectType: template.projectType,
-      address: template.address,
-      jurisdiction: template.jurisdiction,
-      scopeOfWork: template.scopeOfWork,
-      reviewContext: template.reviewContext,
-      status: "DRAFT",
-    },
-    select: { id: true },
-  });
-
-  revalidatePath("/submissions");
-  redirect(`/submissions/${created.id}`);
-}
-
 // ---------------------------------------------------------------------------
 // Update
 // ---------------------------------------------------------------------------

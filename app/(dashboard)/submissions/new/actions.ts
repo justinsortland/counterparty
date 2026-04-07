@@ -92,7 +92,18 @@ export async function createSubmission(
     });
     submissionId = submission.id;
   } catch {
-    return { errors: { form: "Something went wrong. Please try again." } };
+    return {
+      errors: { form: "Something went wrong. Please try again." },
+      values: {
+        title: title ?? "",
+        address: address ?? "",
+        jurisdiction: jurisdiction ?? "",
+        permitType: (permitType as string) ?? "",
+        projectType: (projectType as string) ?? "",
+        scopeOfWork: scopeOfWork ?? "",
+        reviewContext: reviewContext ?? "",
+      },
+    };
   }
 
   redirect(`/submissions/${submissionId}`);
