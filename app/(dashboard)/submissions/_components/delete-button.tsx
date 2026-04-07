@@ -7,12 +7,15 @@ export function DeleteButton({
   submissionId,
   title,
   returnTo,
+  externalDeleting,
 }: {
   submissionId: string;
   title?: string;
   returnTo?: string;
+  externalDeleting?: boolean;
 }) {
   const [isPending, startTransition] = useTransition();
+  const deleting = isPending || externalDeleting;
 
   function handleClick() {
     const label = title ? `Delete submission "${title}"?` : "Permanently delete this submission and all its data?";
@@ -29,10 +32,10 @@ export function DeleteButton({
     <button
       type="button"
       onClick={handleClick}
-      disabled={isPending}
+      disabled={deleting}
       className="text-sm text-red-400 hover:text-red-600 disabled:opacity-40 disabled:cursor-not-allowed"
     >
-      {isPending ? "Deleting…" : "Delete"}
+      {deleting ? "Deleting…" : "Delete"}
     </button>
   );
 }

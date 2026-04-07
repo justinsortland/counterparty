@@ -83,15 +83,18 @@ export function SubmissionsTable({
 }) {
   const router = useRouter();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [bulkDeletingIds, setBulkDeletingIds] = useState<Set<string>>(new Set());
+  const isBulkDeleting = bulkDeletingIds.size > 0;
   const headerCheckboxRef = useRef<HTMLInputElement>(null);
 
   const allSelected = submissions.length > 0 && selectedIds.size === submissions.length;
   const someSelected = selectedIds.size > 0 && !allSelected;
 
-  // Clear selection when the submissions list changes (filter applied or list refreshed)
+  // Clear selection and bulk-deleting state when the submissions list changes
+  // (filter applied, or router.refresh() completes after bulk delete).
   useEffect(() => {
     setSelectedIds(new Set());
+    setBulkDeletingIds(new Set());
   }, [submissions]);
 
   // Drive the indeterminate state — cannot be set via JSX prop
@@ -127,12 +130,13 @@ export function SubmissionsTable({
     // network round-trip and subsequent router.refresh() are in flight.
     const ids = Array.from(selectedIds);
     setSelectedIds(new Set());
-    setIsBulkDeleting(true);
+    setBulkDeletingIds(new Set(ids));
     try {
       await deleteSubmissions(ids);
       router.refresh();
-    } finally {
-      setIsBulkDeleting(false);
+    } catch {
+      // On error, clear deleting state so rows return to normal.
+      setBulkDeletingIds(new Set());
     }
   }
 
@@ -235,7 +239,7 @@ export function SubmissionsTable({
                 <td className={`${TD} text-right`}>
                   <div className="flex items-center justify-end gap-3">
                     <DuplicateButton submissionId={s.id} />
-                    <DeleteButton submissionId={s.id} title={s.title} returnTo={returnTo} />
+                    <DeleteButton submissionId={s.id} title={s.title} returnTo={returnTo} externalDeleting={bulkDeletingIds.has(s.id)} />
                   </div>
                 </td>
               </tr>
