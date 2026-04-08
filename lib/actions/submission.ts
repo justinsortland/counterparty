@@ -96,7 +96,7 @@ export async function duplicateSubmission(formData: FormData): Promise<void> {
   });
   const newTitle = makeUniqueName(copyBase, new Set(siblings.map((s) => s.title)));
 
-  const created = await db.submission.create({
+  await db.submission.create({
     data: {
       workspaceId,
       title: newTitle,
@@ -108,11 +108,9 @@ export async function duplicateSubmission(formData: FormData): Promise<void> {
       reviewContext: source.reviewContext,
       status: "DRAFT",
     },
-    select: { id: true },
   });
 
   revalidatePath("/submissions");
-  redirect(`/submissions/${created.id}`);
 }
 
 export async function deleteSubmission(formData: FormData): Promise<void> {
