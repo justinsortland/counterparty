@@ -6,6 +6,7 @@ import { PermitType, ProjectType } from "@prisma/client";
 import { createClient } from "@/lib/supabase/server";
 import { getWorkspaceId } from "@/lib/workspace";
 import { db } from "@/lib/db";
+import { makeCopyName, makeUniqueName } from "@/lib/copy-name";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -18,20 +19,6 @@ async function getAuthedWorkspace(): Promise<string> {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
   return getWorkspaceId(user.id);
-}
-
-/**
- * Returns `base` if it does not appear in `existing` (case-insensitive,
- * trimmed), otherwise appends the lowest available numeric suffix:
- *   "Foo" → "Foo (2)" → "Foo (3)" …
- */
-function makeUniqueName(base: string, existing: Set<string>): string {
-  const norm = (s: string) => s.trim().toLowerCase();
-  const existingNorm = new Set([...existing].map(norm));
-  if (!existingNorm.has(norm(base))) return base;
-  let n = 2;
-  while (existingNorm.has(norm(`${base} (${n})`))) n++;
-  return `${base} (${n})`;
 }
 
 // ---------------------------------------------------------------------------
@@ -159,19 +146,6 @@ export async function updateTemplate(
 // Duplicate
 // ---------------------------------------------------------------------------
 
-/**
- * Strips a trailing " Copy" or " Copy (N)" suffix (case-insensitive) to get
- * the root name, then appends " Copy".  makeUniqueName handles the rest.
- *
- *   "Standard ADU"         → "Standard ADU Copy"
- *   "Standard ADU Copy"    → "Standard ADU Copy"  (makeUniqueName → "(2)")
- *   "Standard ADU Copy (2)"→ "Standard ADU Copy"  (makeUniqueName → "(3)")
- */
-function makeCopyName(name: string): string {
-  const base = name.trim() || "Untitled template";
-  const root = base.replace(/\s+Copy(\s+\(\d+\))?$/i, "");
-  return `${root} Copy`;
-}
 
 export async function duplicateTemplate(formData: FormData): Promise<void> {
   const workspaceId = await getAuthedWorkspace();
@@ -184,7 +158,7 @@ export async function duplicateTemplate(formData: FormData): Promise<void> {
   });
   if (!template) return;
 
-  const baseName = makeCopyName(template.name);
+  const baseName = makeCopyName(template.name, "Untitled template");
 
   const existing = await db.submissionTemplate.findMany({
     where: { workspaceId },
