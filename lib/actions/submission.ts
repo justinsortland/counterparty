@@ -9,6 +9,21 @@ import { db } from "@/lib/db";
 
 const BUCKET = "artifacts";
 
+function makeCopyName(name: string | null | undefined): string {
+  const base = name?.trim() || "Untitled submission";
+  const root = base.replace(/\s+Copy(\s+\(\d+\))?$/i, "");
+  return `${root} Copy`;
+}
+
+function makeUniqueName(base: string, existing: Set<string>): string {
+  const norm = (s: string) => s.trim().toLowerCase();
+  const existingNorm = new Set([...existing].map(norm));
+  if (!existingNorm.has(norm(base))) return base;
+  let n = 2;
+  while (existingNorm.has(norm(`${base} (${n})`))) n++;
+  return `${base} (${n})`;
+}
+
 export async function deleteSubmissions(ids: string[]): Promise<void> {
   if (ids.length === 0) return;
 
@@ -73,8 +88,13 @@ export async function duplicateSubmission(formData: FormData): Promise<void> {
   });
   if (!source) redirect("/submissions");
 
-  const baseTitle = source.title?.trim() || "Untitled submission";
-  const newTitle = `${baseTitle} (Copy)`;
+  const copyBase = makeCopyName(source.title);
+
+  const siblings = await db.submission.findMany({
+    where: { workspaceId },
+    select: { title: true },
+  });
+  const newTitle = makeUniqueName(copyBase, new Set(siblings.map((s) => s.title)));
 
   const created = await db.submission.create({
     data: {
