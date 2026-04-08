@@ -4,8 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { PermitType, ProjectType } from "@prisma/client";
-import { deleteTemplates, duplicateTemplate } from "@/lib/actions/template";
+import { deleteTemplates } from "@/lib/actions/template";
 import { DeleteTemplateButton } from "./delete-template-button";
+import { DuplicateTemplateButton } from "./duplicate-template-button";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -193,15 +194,7 @@ export function TemplatesTable({ templates }: { templates: TemplateRow[] }) {
                     >
                       Use
                     </Link>
-                    <form action={duplicateTemplate}>
-                      <input type="hidden" name="templateId" value={t.id} />
-                      <button
-                        type="submit"
-                        className="text-sm text-zinc-500 hover:text-zinc-700"
-                      >
-                        Duplicate
-                      </button>
-                    </form>
+                    <DuplicateTemplateButton templateId={t.id} />
                     <Link
                       href={`/submissions/templates/${t.id}/edit`}
                       className="text-sm text-zinc-500 hover:text-zinc-700"
