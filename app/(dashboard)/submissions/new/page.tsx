@@ -5,7 +5,28 @@ import { getWorkspaceId } from "@/lib/workspace";
 import { db } from "@/lib/db";
 import { buttonVariants } from "@/lib/button-variants";
 import { SubmissionForm } from "./form";
-import type { Prisma } from "@prisma/client";
+import type { PermitType, Prisma, ProjectType } from "@prisma/client";
+
+const PERMIT_TYPE_LABELS: Record<PermitType, string> = {
+  BUILDING: "Building",
+  ELECTRICAL: "Electrical",
+  PLUMBING: "Plumbing",
+  MECHANICAL: "Mechanical (HVAC)",
+  ZONING: "Zoning / Land Use",
+  GRADING: "Grading / Drainage",
+};
+
+const PROJECT_TYPE_LABELS: Record<ProjectType, string> = {
+  REMODEL: "Kitchen or Bath Remodel",
+  ADDITION: "Room Addition",
+  ADU: "ADU",
+  NEW_CONSTRUCTION: "New Construction",
+  DECK_PATIO: "Deck or Patio",
+  FENCE_WALL: "Fence or Retaining Wall",
+  POOL: "Pool or Spa",
+  DEMOLITION: "Demolition",
+  OTHER: "Other",
+};
 
 const SORT_OPTIONS: Record<string, Prisma.SubmissionTemplateOrderByWithRelationInput> = {
   newest: { createdAt: "desc" },
@@ -58,7 +79,7 @@ export default async function NewSubmissionPage({
       ...(q ? { name: { contains: q, mode: "insensitive" } } : {}),
     },
     orderBy: SORT_OPTIONS[sort],
-    select: { id: true, name: true },
+    select: { id: true, name: true, permitType: true, projectType: true, jurisdiction: true },
   });
 
   // Total count so we can show the picker section even when the filter returns 0.
@@ -131,20 +152,26 @@ export default async function NewSubmissionPage({
             </form>
 
             {/* Template chips */}
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs text-zinc-400">Start from a template:</span>
-
+            <p className="mb-2 text-xs text-zinc-400">Start from a template:</p>
+            <div className="flex flex-wrap gap-2">
               {/* Selected chip — always shown when a template is active, even if filtered out */}
               {selectedTemplate && (
-                <span className="inline-flex items-center gap-1 rounded-md bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700">
-                  {selectedTemplate.name}
-                  <Link
-                    href={pickerUrl({ q, sort })}
-                    className="text-zinc-400 hover:text-zinc-600"
-                    aria-label="Clear template"
-                  >
-                    ×
-                  </Link>
+                <span className="block rounded-md bg-zinc-100 px-2.5 py-1.5">
+                  <span className="flex items-start justify-between gap-3">
+                    <span className="text-xs font-medium text-zinc-700">
+                      {selectedTemplate.name}
+                    </span>
+                    <Link
+                      href={pickerUrl({ q, sort })}
+                      className="mt-px text-xs leading-none text-zinc-400 hover:text-zinc-600"
+                      aria-label="Clear template"
+                    >
+                      ×
+                    </Link>
+                  </span>
+                  <span className="mt-0.5 block text-xs text-zinc-400">
+                    {PERMIT_TYPE_LABELS[selectedTemplate.permitType]} · {PROJECT_TYPE_LABELS[selectedTemplate.projectType]}{selectedTemplate.jurisdiction ? ` · ${selectedTemplate.jurisdiction}` : ""}
+                  </span>
                 </span>
               )}
 
@@ -152,9 +179,12 @@ export default async function NewSubmissionPage({
                 <Link
                   key={t.id}
                   href={pickerUrl({ template: t.id, q, sort })}
-                  className="rounded-md px-2 py-0.5 text-xs text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700"
+                  className="block rounded-md px-2.5 py-1.5 hover:bg-zinc-100"
                 >
-                  {t.name}
+                  <span className="block text-xs font-medium text-zinc-700">{t.name}</span>
+                  <span className="mt-0.5 block text-xs text-zinc-400">
+                    {PERMIT_TYPE_LABELS[t.permitType]} · {PROJECT_TYPE_LABELS[t.projectType]}{t.jurisdiction ? ` · ${t.jurisdiction}` : ""}
+                  </span>
                 </Link>
               ))}
 
