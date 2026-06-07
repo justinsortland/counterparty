@@ -25,6 +25,8 @@ For non-trivial work, follow this workflow:
 5. Make the smallest clean change.
 6. Review the diff before declaring completion.
 7. Provide manual browser QA steps.
+8. If acting as an implementer and the user asked only for planning/review, stop after the plan and wait for explicit approval.
+9. If acting as a reviewer, verify the implementation did not exceed the approved scope.
 
 Do not jump directly from vague request to implementation.
 
