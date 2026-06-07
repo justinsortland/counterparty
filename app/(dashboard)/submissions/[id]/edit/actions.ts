@@ -28,6 +28,8 @@ export async function updateSubmission(
 
   const submissionId = (formData.get("submissionId") as string)?.trim();
   if (!submissionId) return { errors: { form: "Missing submission ID." } };
+  const rawReturnTo = (formData.get("returnTo") as string | null)?.trim();
+  const returnTo = /^\/submissions(\?.*)?$/.test(rawReturnTo ?? "") ? rawReturnTo : undefined;
 
   const existing = await db.submission.findFirst({
     where: { id: submissionId, workspaceId },
@@ -66,5 +68,6 @@ export async function updateSubmission(
     return { errors: { form: "Something went wrong. Please try again." } };
   }
 
-  redirect(`/submissions/${submissionId}`);
+  const detailUrl = `/submissions/${submissionId}${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`;
+  redirect(detailUrl);
 }

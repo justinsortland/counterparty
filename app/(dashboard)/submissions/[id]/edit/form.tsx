@@ -11,8 +11,10 @@ import {
 
 export function EditSubmissionForm({
   submission,
+  returnTo,
 }: {
   submission: SubmissionDefaultValues & { id: string };
+  returnTo?: string;
 }) {
   const [state, formAction, isPending] = useActionState<
     UpdateSubmissionState,
@@ -24,6 +26,7 @@ export function EditSubmissionForm({
   return (
     <form action={formAction} className="space-y-5">
       <input type="hidden" name="submissionId" value={submission.id} />
+      {returnTo && <input type="hidden" name="returnTo" value={returnTo} />}
 
       {errors.form && (
         <p className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -35,7 +38,7 @@ export function EditSubmissionForm({
 
       <div className="flex items-center justify-end gap-3 pt-2">
         <Link
-          href={`/submissions/${submission.id}`}
+          href={`/submissions/${submission.id}${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`}
           className={buttonVariants({ variant: "ghost", size: "sm" })}
         >
           Cancel

@@ -550,7 +550,7 @@ export default async function SubmissionDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ review_error?: string; upload_error?: string }>;
+  searchParams: Promise<{ review_error?: string; upload_error?: string; returnTo?: string }>;
 }) {
   const supabase = await createClient();
   const {
@@ -559,7 +559,8 @@ export default async function SubmissionDetailPage({
   if (!user) redirect("/login");
 
   const { id } = await params;
-  const { review_error, upload_error } = await searchParams;
+  const { review_error, upload_error, returnTo: rawReturnTo } = await searchParams;
+  const backUrl = /^\/submissions(\?.*)?$/.test(rawReturnTo ?? "") ? rawReturnTo! : "/submissions";
   const workspaceId = await getWorkspaceId(user.id);
   const submission = await getSubmission(id, workspaceId);
 
@@ -584,7 +585,7 @@ export default async function SubmissionDetailPage({
       {/* Header */}
       <div className="mb-6">
         <Link
-          href="/submissions"
+          href={backUrl}
           className="text-sm text-zinc-400 hover:text-zinc-600"
         >
           ← Submissions
@@ -605,7 +606,7 @@ export default async function SubmissionDetailPage({
           </div>
           <div className="flex items-center gap-3">
             <Link
-              href={`/submissions/${submission.id}/edit`}
+              href={`/submissions/${submission.id}/edit?returnTo=${encodeURIComponent(backUrl)}`}
               className={buttonVariants({ variant: "ghost", size: "sm" })}
             >
               Edit

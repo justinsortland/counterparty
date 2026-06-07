@@ -209,7 +209,7 @@ export function SubmissionsTable({
                 </td>
                 <td className={TD}>
                   <Link
-                    href={`/submissions/${s.id}`}
+                    href={`/submissions/${s.id}?returnTo=${encodeURIComponent(returnTo)}`}
                     className="font-medium text-zinc-900 hover:text-zinc-600"
                   >
                     {s.title}
