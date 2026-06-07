@@ -153,7 +153,7 @@ export default async function NewSubmissionPage({
 
             {/* Template chips */}
             <p className="mb-2 text-xs text-zinc-400">Start from a template:</p>
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-[auto_1fr] gap-2">
               {/* Selected chip — always shown when a template is active, even if filtered out */}
               {selectedTemplate && (
                 <span className="block rounded-md bg-zinc-100 px-2.5 py-1.5">
