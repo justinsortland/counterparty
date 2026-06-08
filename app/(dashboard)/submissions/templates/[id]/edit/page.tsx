@@ -7,8 +7,10 @@ import { EditTemplateForm } from "./form";
 
 export default async function EditTemplatePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ returnTo?: string }>;
 }) {
   const supabase = await createClient();
   const {
@@ -18,6 +20,13 @@ export default async function EditTemplatePage({
 
   const { id } = await params;
   const workspaceId = await getWorkspaceId(user.id);
+
+  const { returnTo: rawReturnTo } = await searchParams;
+  const returnTo = /^\/submissions\/templates(\?.*)?$/.test(rawReturnTo ?? "")
+    ? rawReturnTo!
+    : undefined;
+
+  const backUrl = returnTo ?? "/submissions/templates";
 
   const template = await db.submissionTemplate.findFirst({
     where: { id, workspaceId },
@@ -39,7 +48,7 @@ export default async function EditTemplatePage({
     <div className="p-8">
       <div className="mb-6">
         <Link
-          href="/submissions/templates"
+          href={backUrl}
           className="text-sm text-zinc-400 hover:text-zinc-600"
         >
           ← Templates
@@ -48,7 +57,7 @@ export default async function EditTemplatePage({
       </div>
 
       <div className="max-w-xl">
-        <EditTemplateForm template={template} />
+        <EditTemplateForm template={template} returnTo={returnTo} />
       </div>
     </div>
   );

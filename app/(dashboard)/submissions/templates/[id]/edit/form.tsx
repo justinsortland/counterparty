@@ -19,7 +19,7 @@ type TemplateValues = {
   reviewContext?: string | null;
 };
 
-export function EditTemplateForm({ template }: { template: TemplateValues }) {
+export function EditTemplateForm({ template, returnTo }: { template: TemplateValues; returnTo?: string }) {
   const [state, formAction, isPending] = useActionState<UpdateTemplateState, FormData>(
     updateTemplate,
     null
@@ -30,6 +30,7 @@ export function EditTemplateForm({ template }: { template: TemplateValues }) {
   return (
     <form action={formAction} className="space-y-5">
       <input type="hidden" name="templateId" value={template.id} />
+      {returnTo && <input type="hidden" name="returnTo" value={returnTo} />}
 
       {errors.form && (
         <p className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -74,7 +75,7 @@ export function EditTemplateForm({ template }: { template: TemplateValues }) {
 
       <div className="flex items-center justify-end gap-3 pt-2">
         <Link
-          href="/submissions/templates"
+          href={returnTo ?? "/submissions/templates"}
           className={buttonVariants({ variant: "ghost", size: "sm" })}
         >
           Cancel

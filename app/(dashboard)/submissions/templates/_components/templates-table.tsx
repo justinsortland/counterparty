@@ -60,7 +60,7 @@ const TD = "px-4 py-3 text-sm";
 // Component
 // ---------------------------------------------------------------------------
 
-export function TemplatesTable({ templates }: { templates: TemplateRow[] }) {
+export function TemplatesTable({ templates, returnTo }: { templates: TemplateRow[]; returnTo: string }) {
   const router = useRouter();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeletingIds, setBulkDeletingIds] = useState<Set<string>>(new Set());
@@ -196,7 +196,7 @@ export function TemplatesTable({ templates }: { templates: TemplateRow[] }) {
                     </Link>
                     <DuplicateTemplateButton templateId={t.id} />
                     <Link
-                      href={`/submissions/templates/${t.id}/edit`}
+                      href={`/submissions/templates/${t.id}/edit${returnTo !== "/submissions/templates" ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`}
                       className="text-sm text-zinc-500 hover:text-zinc-700"
                     >
                       Edit

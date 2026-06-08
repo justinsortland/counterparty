@@ -97,6 +97,11 @@ export async function updateTemplate(
   const templateId = (formData.get("templateId") as string)?.trim();
   if (!templateId) return { errors: { form: "Missing template ID." } };
 
+  const rawReturnTo = (formData.get("returnTo") as string | null)?.trim();
+  const redirectTo = /^\/submissions\/templates(\?.*)?$/.test(rawReturnTo ?? "")
+    ? rawReturnTo!
+    : "/submissions/templates";
+
   const existing = await db.submissionTemplate.findFirst({
     where: { id: templateId, workspaceId },
     select: { id: true },
@@ -139,7 +144,7 @@ export async function updateTemplate(
   }
 
   revalidatePath("/submissions/templates");
-  redirect("/submissions/templates");
+  redirect(redirectTo);
 }
 
 // ---------------------------------------------------------------------------

@@ -51,6 +51,15 @@ export default async function TemplatesPage({
 
   const templateRows = templates.map((t) => ({ ...t, createdAt: t.createdAt.toISOString() }));
 
+  const filterParams = new URLSearchParams({
+    ...(q && { q }),
+    ...(rawSort && { sort }),
+  }).toString();
+
+  const returnTo = filterParams
+    ? `/submissions/templates?${filterParams}`
+    : "/submissions/templates";
+
   // Total count for detecting "no results vs. no templates at all"
   const totalCount = hasFilters
     ? await db.submissionTemplate.count({ where: { workspaceId } })
@@ -124,7 +133,7 @@ export default async function TemplatesPage({
               </Link>
             </div>
           ) : (
-            <TemplatesTable templates={templateRows} />
+            <TemplatesTable templates={templateRows} returnTo={returnTo} />
           )}
         </>
       )}
