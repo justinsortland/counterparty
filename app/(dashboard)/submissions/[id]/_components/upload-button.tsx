@@ -1,6 +1,7 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
+import { buttonVariants } from "@/lib/button-variants";
 
 export function UploadButton() {
   const { pending } = useFormStatus();
@@ -8,7 +9,7 @@ export function UploadButton() {
     <button
       type="submit"
       disabled={pending}
-      className="rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-700 disabled:opacity-50"
+      className={buttonVariants({ variant: "default", size: "sm" })}
     >
       {pending ? "Uploading…" : "Upload file"}
     </button>
