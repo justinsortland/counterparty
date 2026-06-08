@@ -21,9 +21,9 @@ export default async function DashboardLayout({
   await bootstrapWorkspace(user.id, user.email!, user.user_metadata?.name);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-white print:h-auto print:overflow-visible">
+    <div className="flex h-screen overflow-hidden bg-background print:h-auto print:overflow-visible">
       {/* Sidebar */}
-      <aside className="flex w-[220px] shrink-0 flex-col border-r border-zinc-100 bg-white print:hidden">
+      <aside className="flex w-[220px] shrink-0 flex-col border-r border-zinc-100 bg-sidebar print:hidden">
         {/* Wordmark */}
         <div className="flex h-14 items-center border-b border-zinc-100 px-4">
           <span className="text-sm font-semibold tracking-tight text-zinc-900">
