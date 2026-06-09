@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { deleteSubmissions } from "@/lib/actions/submission";
+import { buttonVariants } from "@/lib/button-variants";
 import { DeleteButton } from "./delete-button";
 import { DuplicateButton } from "./duplicate-button";
 import type { PermitType, ProjectType, SubmissionStatus } from "@prisma/client";
@@ -152,7 +153,7 @@ export function SubmissionsTable({
             type="button"
             onClick={handleBulkDelete}
             disabled={isBulkDeleting}
-            className="rounded-md bg-red-50 px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-100 disabled:opacity-40 disabled:cursor-not-allowed"
+            className={buttonVariants({ variant: "destructive", size: "sm" })}
           >
             {isBulkDeleting
               ? "Deleting…"

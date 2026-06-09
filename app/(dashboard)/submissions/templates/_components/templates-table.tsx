@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { PermitType, ProjectType } from "@prisma/client";
 import { deleteTemplates } from "@/lib/actions/template";
+import { buttonVariants } from "@/lib/button-variants";
 import { DeleteTemplateButton } from "./delete-template-button";
 import { DuplicateTemplateButton } from "./duplicate-template-button";
 
@@ -122,7 +123,7 @@ export function TemplatesTable({ templates, returnTo }: { templates: TemplateRow
             type="button"
             onClick={handleBulkDelete}
             disabled={isBulkDeleting}
-            className="rounded-md bg-red-50 px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-100 disabled:opacity-40 disabled:cursor-not-allowed"
+            className={buttonVariants({ variant: "destructive", size: "sm" })}
           >
             {isBulkDeleting
               ? "Deleting…"
