@@ -30,7 +30,7 @@ export function SubmissionForm({
   const fieldsKey = JSON.stringify(displayValues ?? null);
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form action={formAction} noValidate className="space-y-5">
       {errors.form && (
         <p className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
           {errors.form}

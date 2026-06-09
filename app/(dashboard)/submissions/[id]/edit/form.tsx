@@ -22,9 +22,11 @@ export function EditSubmissionForm({
   >(updateSubmission, null);
 
   const errors = state?.errors ?? {};
+  const displayValues = state?.values ?? submission;
+  const fieldsKey = JSON.stringify(displayValues);
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form action={formAction} noValidate className="space-y-5">
       <input type="hidden" name="submissionId" value={submission.id} />
       {returnTo && <input type="hidden" name="returnTo" value={returnTo} />}
 
@@ -34,7 +36,7 @@ export function EditSubmissionForm({
         </p>
       )}
 
-      <SubmissionFields defaultValues={submission} errors={errors} />
+      <SubmissionFields key={fieldsKey} defaultValues={displayValues} errors={errors} />
 
       <div className="flex items-center justify-end gap-3 pt-2">
         <Link

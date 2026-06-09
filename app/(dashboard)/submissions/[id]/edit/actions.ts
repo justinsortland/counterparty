@@ -9,7 +9,17 @@ import type { SubmissionFieldErrors } from "../../_components/submission-fields"
 
 type FormErrors = SubmissionFieldErrors & { form?: string };
 
-export type UpdateSubmissionState = { errors: FormErrors } | null;
+type SubmittedValues = {
+  title: string;
+  address: string;
+  jurisdiction: string;
+  permitType: string;
+  projectType: string;
+  scopeOfWork: string;
+  reviewContext: string;
+};
+
+export type UpdateSubmissionState = { errors: FormErrors; values: SubmittedValues } | null;
 
 const VALID_PERMIT_TYPES = Object.values(PermitType);
 const VALID_PROJECT_TYPES = Object.values(ProjectType);
@@ -27,7 +37,7 @@ export async function updateSubmission(
   const workspaceId = await getWorkspaceId(user.id);
 
   const submissionId = (formData.get("submissionId") as string)?.trim();
-  if (!submissionId) return { errors: { form: "Missing submission ID." } };
+  if (!submissionId) return { errors: { form: "Missing submission ID." }, values: { title: "", address: "", jurisdiction: "", permitType: "", projectType: "", scopeOfWork: "", reviewContext: "" } };
   const rawReturnTo = (formData.get("returnTo") as string | null)?.trim();
   const returnTo = /^\/submissions(\?.*)?$/.test(rawReturnTo ?? "") ? rawReturnTo : undefined;
 
@@ -35,7 +45,7 @@ export async function updateSubmission(
     where: { id: submissionId, workspaceId },
     select: { id: true },
   });
-  if (!existing) return { errors: { form: "Submission not found." } };
+  if (!existing) return { errors: { form: "Submission not found." }, values: { title: "", address: "", jurisdiction: "", permitType: "", projectType: "", scopeOfWork: "", reviewContext: "" } };
 
   const title = (formData.get("title") as string)?.trim();
   const address = (formData.get("address") as string)?.trim();
@@ -45,6 +55,16 @@ export async function updateSubmission(
   const scopeOfWork = (formData.get("scopeOfWork") as string)?.trim();
   const reviewContext =
     (formData.get("reviewContext") as string)?.trim() || null;
+
+  const values: SubmittedValues = {
+    title: title ?? "",
+    address: address ?? "",
+    jurisdiction: jurisdiction ?? "",
+    permitType: (permitType as string) ?? "",
+    projectType: (projectType as string) ?? "",
+    scopeOfWork: scopeOfWork ?? "",
+    reviewContext: reviewContext ?? "",
+  };
 
   const errors: FormErrors = {};
 
@@ -57,7 +77,7 @@ export async function updateSubmission(
     errors.projectType = "Project type is required.";
   if (!scopeOfWork) errors.scopeOfWork = "Scope of work is required.";
 
-  if (Object.keys(errors).length > 0) return { errors };
+  if (Object.keys(errors).length > 0) return { errors, values };
 
   try {
     await db.submission.update({
@@ -65,7 +85,7 @@ export async function updateSubmission(
       data: { title, address, jurisdiction, permitType, projectType, scopeOfWork, reviewContext },
     });
   } catch {
-    return { errors: { form: "Something went wrong. Please try again." } };
+    return { errors: { form: "Something went wrong. Please try again." }, values };
   }
 
   const detailUrl = `/submissions/${submissionId}${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`;
