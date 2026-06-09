@@ -3,6 +3,8 @@
 import { useTransition } from "react";
 import { deleteSubmission } from "@/lib/actions/submission";
 
+const DESTRUCTIVE_TEXT_CLS = "text-sm text-red-500 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+
 export function DeleteButton({
   submissionId,
   title,
@@ -33,7 +35,7 @@ export function DeleteButton({
       type="button"
       onClick={handleClick}
       disabled={deleting}
-      className="text-sm text-red-400 hover:text-red-600 disabled:opacity-40 disabled:cursor-not-allowed"
+      className={DESTRUCTIVE_TEXT_CLS}
     >
       {deleting ? "Deleting…" : "Delete"}
     </button>

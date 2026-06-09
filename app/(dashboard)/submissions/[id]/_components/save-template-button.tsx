@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { saveAsTemplate } from "@/lib/actions/template";
 
+const SECONDARY_TEXT_CLS = "text-sm text-zinc-500 hover:text-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+
 export function SaveTemplateButton({
   submissionId,
   defaultName,
@@ -43,9 +45,7 @@ export function SaveTemplateButton({
       type="button"
       onClick={handleClick}
       disabled={isSaving}
-      className={`text-sm disabled:opacity-40 disabled:cursor-not-allowed ${
-        saved ? "text-green-600" : "text-zinc-500 hover:text-zinc-700"
-      }`}
+      className={saved ? "text-sm text-green-600 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" : SECONDARY_TEXT_CLS}
     >
       {label}
     </button>

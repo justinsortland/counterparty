@@ -801,7 +801,7 @@ export default async function SubmissionDetailPage({
                     <input type="hidden" name="submissionId" value={submission.id} />
                     <button
                       type="submit"
-                      className="text-xs text-red-400 hover:text-red-600"
+                      className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       Remove
                     </button>
