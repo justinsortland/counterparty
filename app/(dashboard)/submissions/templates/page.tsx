@@ -14,7 +14,7 @@ const SORT_OPTIONS: Record<string, Prisma.SubmissionTemplateOrderByWithRelationI
 };
 
 const INPUT_CLS =
-  "rounded-md border border-zinc-200 bg-white px-2.5 py-1.5 text-sm text-zinc-700 outline-none focus:border-zinc-400";
+  "rounded-md border border-zinc-200 bg-white px-2.5 py-1.5 text-sm text-zinc-700 outline-none placeholder:text-zinc-400 focus:border-zinc-400 focus:ring-2 focus:ring-ring/20";
 
 export default async function TemplatesPage({
   searchParams,

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 const INPUT_CLS =
-  "rounded-md border border-zinc-200 bg-white px-2.5 py-1.5 text-sm text-zinc-700 outline-none focus:border-zinc-400";
+  "rounded-md border border-zinc-200 bg-white px-2.5 py-1.5 text-sm text-zinc-700 outline-none placeholder:text-zinc-400 focus:border-zinc-400 focus:ring-2 focus:ring-ring/20";
 
 export function FilterBar() {
   const router = useRouter();
