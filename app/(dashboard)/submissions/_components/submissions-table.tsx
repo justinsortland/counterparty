@@ -68,7 +68,7 @@ function formatDate(iso: string): string {
   }).format(new Date(iso));
 }
 
-const TH = "px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-zinc-500";
+const TH = "px-4 py-2.5 text-left text-xs font-medium text-zinc-500";
 const TD = "px-4 py-3 text-sm";
 
 // ---------------------------------------------------------------------------
@@ -179,7 +179,7 @@ export function SubmissionsTable({
                   type="checkbox"
                   checked={allSelected}
                   onChange={toggleAll}
-                  className="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-500"
+                  className="rounded border-zinc-300 text-zinc-900 focus:ring-primary"
                   aria-label="Select all"
                 />
               </th>
@@ -204,7 +204,7 @@ export function SubmissionsTable({
                     type="checkbox"
                     checked={selectedIds.has(s.id)}
                     onChange={() => toggleRow(s.id)}
-                    className="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-500"
+                    className="rounded border-zinc-300 text-zinc-900 focus:ring-primary"
                     aria-label={`Select ${s.title}`}
                   />
                 </td>
