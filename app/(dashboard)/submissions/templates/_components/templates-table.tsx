@@ -164,8 +164,10 @@ export function TemplatesTable({ templates, returnTo }: { templates: TemplateRow
             {templates.map((t) => (
               <tr
                 key={t.id}
-                className={`transition-colors hover:bg-zinc-50 ${
-                  selectedIds.has(t.id) ? "bg-zinc-50" : ""
+                className={`transition-colors ${
+                  selectedIds.has(t.id)
+                    ? "bg-primary/5 hover:bg-primary/8"
+                    : "hover:bg-zinc-50"
                 }`}
               >
                 <td className="px-4 py-3 w-8">
