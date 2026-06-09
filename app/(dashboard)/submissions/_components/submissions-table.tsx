@@ -213,11 +213,11 @@ export function SubmissionsTable({
                 <td className={TD}>
                   <Link
                     href={`/submissions/${s.id}?returnTo=${encodeURIComponent(returnTo)}`}
-                    className="font-medium text-zinc-900 hover:text-zinc-600"
+                    className="font-semibold text-zinc-900 hover:text-zinc-600"
                   >
                     {s.title}
                   </Link>
-                  <p className="mt-0.5 text-xs text-zinc-400">{s.address}</p>
+                  <p className="mt-1 text-xs text-zinc-500">{s.address}</p>
                 </td>
                 <td className={TD}>
                   <span className="inline-flex items-center rounded-md bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">

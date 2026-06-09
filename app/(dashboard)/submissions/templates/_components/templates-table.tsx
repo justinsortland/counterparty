@@ -179,7 +179,7 @@ export function TemplatesTable({ templates, returnTo }: { templates: TemplateRow
                     aria-label={`Select ${t.name}`}
                   />
                 </td>
-                <td className={`${TD} font-medium text-zinc-900`}>{t.name}</td>
+                <td className={`${TD} font-semibold text-zinc-900`}>{t.name}</td>
                 <td className={TD}>
                   <span className="inline-flex items-center rounded-md bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">
                     {PERMIT_TYPE_LABELS[t.permitType]}
