@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { computeDelta } from "@/lib/ai/review-delta";
 import type { ReviewVerdict, IssueSeverity } from "@prisma/client";
 import { PrintButton } from "../report/_components/print-button";
+import { buttonVariants } from "@/lib/button-variants";
 
 // ---------------------------------------------------------------------------
 // Labels / styles
@@ -238,7 +239,7 @@ export default async function ComparePage({
             </div>
             <button
               type="submit"
-              className="rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-50"
+              className={buttonVariants({ variant: "outline", size: "sm" })}
             >
               Apply
             </button>
