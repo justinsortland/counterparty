@@ -188,7 +188,7 @@ export function SubmissionsTable({
               <th className={TH}>Project Type</th>
               <th className={TH}>Status</th>
               <th className={TH}>Updated</th>
-              <th className={TH}><span className="sr-only">Actions</span></th>
+              <th className={`${TH} w-px`}><span className="sr-only">Actions</span></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-100 bg-white">
@@ -239,7 +239,7 @@ export function SubmissionsTable({
                 <td className={`${TD} text-zinc-400`}>
                   {formatDate(s.updatedAt)}
                 </td>
-                <td className={`${TD} text-right`}>
+                <td className={`${TD} whitespace-nowrap`}>
                   <div className="flex items-center justify-end gap-3">
                     <DuplicateButton submissionId={s.id} />
                     <DeleteButton submissionId={s.id} title={s.title} returnTo={returnTo} externalDeleting={bulkDeletingIds.has(s.id)} />

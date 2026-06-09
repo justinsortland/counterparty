@@ -157,7 +157,7 @@ export function TemplatesTable({ templates, returnTo }: { templates: TemplateRow
               <th className={TH}>Permit Type</th>
               <th className={TH}>Project Type</th>
               <th className={TH}>Saved</th>
-              <th className={TH}><span className="sr-only">Actions</span></th>
+              <th className={`${TH} w-px`}><span className="sr-only">Actions</span></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-100 bg-white">
@@ -189,7 +189,7 @@ export function TemplatesTable({ templates, returnTo }: { templates: TemplateRow
                   {PROJECT_TYPE_LABELS[t.projectType]}
                 </td>
                 <td className={`${TD} text-zinc-400`}>{formatDate(t.createdAt)}</td>
-                <td className={`${TD} text-right`}>
+                <td className={`${TD} whitespace-nowrap`}>
                   <div className="flex items-center justify-end gap-3">
                     <Link
                       href={`/submissions/new?template=${t.id}`}
