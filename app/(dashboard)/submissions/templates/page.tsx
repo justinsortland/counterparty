@@ -78,12 +78,12 @@ export default async function TemplatesPage({
 
       {totalCount === 0 ? (
         // Truly empty — no templates in the workspace at all
-        <div className="rounded-lg border border-dashed border-zinc-200 py-16 text-center">
-          <p className="text-sm font-medium text-zinc-900">No templates yet</p>
-          <p className="mt-1 text-sm text-zinc-500">
+        <div className="rounded-lg border border-dashed border-zinc-200 py-20 text-center">
+          <p className="text-base font-semibold text-zinc-900">No templates yet</p>
+          <p className="mt-2 text-sm text-zinc-500">
             Open a submission and click &ldquo;Save as template&rdquo; to create one.
           </p>
-          <div className="mt-4">
+          <div className="mt-6">
             <Link href="/submissions" className={buttonVariants({ size: "sm" })}>
               Go to submissions
             </Link>
@@ -123,13 +123,15 @@ export default async function TemplatesPage({
 
           {templateRows.length === 0 ? (
             // Templates exist but none match the current search
-            <div className="rounded-lg border border-zinc-200 py-12 text-center">
-              <p className="text-sm text-zinc-500">No templates match your search.</p>
+            <div className="rounded-lg border border-zinc-200 py-16 text-center">
+              <p className="text-sm font-medium text-zinc-700">
+                No templates match your search.
+              </p>
               <Link
                 href="/submissions/templates"
-                className="mt-2 inline-block text-sm text-zinc-400 hover:text-zinc-600"
+                className="mt-3 inline-block text-sm text-zinc-500 hover:text-zinc-700"
               >
-                × Clear search
+                Clear search
               </Link>
             </div>
           ) : (
