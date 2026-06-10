@@ -197,21 +197,21 @@ export default async function ComparePage({
         {/* Screen-only page title */}
         <div className="mb-6 print:hidden">
           <h1 className="text-lg font-semibold text-zinc-900">Compare Revisions</h1>
-          <p className="mt-0.5 text-sm text-zinc-400">{submission.title}</p>
+          <p className="mt-1 text-sm text-zinc-500">{submission.title}</p>
         </div>
 
         <div className="flex flex-col gap-6 max-w-2xl">
           {/* Revision selector — screen only */}
           <form method="GET" className="flex items-end gap-3 flex-wrap print:hidden">
             <div className="flex flex-col gap-1">
-              <label htmlFor="from" className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">
+              <label htmlFor="from" className="text-xs font-medium text-zinc-500">
                 From
               </label>
               <select
                 id="from"
                 name="from"
                 defaultValue={fromRevNum}
-                className="rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-700"
+                className="rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-700 outline-none focus:border-zinc-400 focus:ring-2 focus:ring-ring/20"
               >
                 {sortedRevNums.map((n) => (
                   <option key={n} value={n}>
@@ -221,14 +221,14 @@ export default async function ComparePage({
               </select>
             </div>
             <div className="flex flex-col gap-1">
-              <label htmlFor="to" className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">
+              <label htmlFor="to" className="text-xs font-medium text-zinc-500">
                 To
               </label>
               <select
                 id="to"
                 name="to"
                 defaultValue={toRevNum}
-                className="rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-700"
+                className="rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-700 outline-none focus:border-zinc-400 focus:ring-2 focus:ring-ring/20"
               >
                 {sortedRevNums.map((n) => (
                   <option key={n} value={n}>
@@ -249,7 +249,7 @@ export default async function ComparePage({
           <div className="grid grid-cols-2 gap-4">
             {/* From */}
             <div className="rounded-lg border border-zinc-200 bg-white px-4 py-3">
-              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-400">
+              <p className="mb-1 text-xs font-medium text-zinc-400">
                 Revision {fromRevNum}
               </p>
               <p className="text-xs text-zinc-400">{formatDate(fromReview.createdAt)}</p>
@@ -262,7 +262,7 @@ export default async function ComparePage({
 
             {/* To */}
             <div className="rounded-lg border border-zinc-200 bg-white px-4 py-3">
-              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-400">
+              <p className="mb-1 text-xs font-medium text-zinc-400">
                 Revision {toRevNum}
               </p>
               <p className="text-xs text-zinc-400">{formatDate(toReview.createdAt)}</p>
