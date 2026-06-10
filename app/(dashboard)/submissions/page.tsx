@@ -87,6 +87,7 @@ export default async function SubmissionsPage({
     : undefined;
 
   const hasFilters = !!(q || status || permitType || projectType);
+  const hasSearchOnly = !!q && !status && !permitType && !projectType;
 
   const submissions = await getSubmissions(workspaceId, { q, status, permitType, projectType });
 
@@ -130,22 +131,24 @@ export default async function SubmissionsPage({
 
       {submissions.length === 0 ? (
         hasFilters ? (
-          <div className="rounded-lg border border-zinc-200 py-12 text-center">
-            <p className="text-sm text-zinc-500">No submissions match your filters.</p>
+          <div className="rounded-lg border border-zinc-200 py-16 text-center">
+            <p className="text-sm font-medium text-zinc-700">
+              {hasSearchOnly ? "No submissions match your search." : "No submissions match your filters."}
+            </p>
             <Link
               href="/submissions"
-              className="mt-2 inline-block text-sm text-zinc-400 hover:text-zinc-600"
+              className="mt-3 inline-block text-sm text-zinc-500 hover:text-zinc-700"
             >
-              Clear filters
+              {hasSearchOnly ? "Clear search" : "Clear filters"}
             </Link>
           </div>
         ) : (
-          <div className="rounded-lg border border-dashed border-zinc-200 py-16 text-center">
-            <p className="text-sm font-medium text-zinc-900">No submissions yet</p>
-            <p className="mt-1 text-sm text-zinc-500">
+          <div className="rounded-lg border border-dashed border-zinc-200 py-20 text-center">
+            <p className="text-base font-semibold text-zinc-900">No submissions yet</p>
+            <p className="mt-2 text-sm text-zinc-500">
               Create your first permit submission to get an AI review.
             </p>
-            <div className="mt-4">
+            <div className="mt-6">
               <Link
                 href="/submissions/new"
                 className={buttonVariants({ size: "sm" })}
