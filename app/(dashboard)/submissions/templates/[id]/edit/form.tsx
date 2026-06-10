@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, Fragment } from "react";
 import Link from "next/link";
 import { updateTemplate, type UpdateTemplateState } from "@/lib/actions/template";
 import { buttonVariants } from "@/lib/button-variants";
@@ -26,9 +26,11 @@ export function EditTemplateForm({ template, returnTo }: { template: TemplateVal
   );
 
   const errors = state?.errors ?? {};
+  const displayValues = state?.values ?? template;
+  const fieldsKey = JSON.stringify(displayValues);
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form action={formAction} noValidate className="space-y-5">
       <input type="hidden" name="templateId" value={template.id} />
       {returnTo && <input type="hidden" name="returnTo" value={returnTo} />}
 
@@ -38,40 +40,42 @@ export function EditTemplateForm({ template, returnTo }: { template: TemplateVal
         </p>
       )}
 
-      {/* Name */}
-      <div>
-        <label htmlFor="name" className={labelClass}>
-          Template Name <span className="text-red-500">*</span>
-        </label>
-        <input
-          id="name"
-          name="name"
-          type="text"
-          required
-          defaultValue={template.name}
-          placeholder="e.g. Standard ADU – San Francisco"
-          className={cn(
-            inputClass,
-            errors.name && "border-red-300 focus:border-red-400 focus:ring-red-100"
+      <Fragment key={fieldsKey}>
+        {/* Name */}
+        <div>
+          <label htmlFor="name" className={labelClass}>
+            Template Name <span className="text-red-500">*</span>
+          </label>
+          <input
+            id="name"
+            name="name"
+            type="text"
+            required
+            defaultValue={displayValues.name}
+            placeholder="e.g. Standard ADU – San Francisco"
+            className={cn(
+              inputClass,
+              errors.name && "border-red-300 focus:border-red-400 focus:ring-red-100"
+            )}
+          />
+          {errors.name && (
+            <p className="mt-1 text-xs text-red-600">{errors.name}</p>
           )}
-        />
-        {errors.name && (
-          <p className="mt-1 text-xs text-red-600">{errors.name}</p>
-        )}
-      </div>
+        </div>
 
-      <SubmissionFields
-        hideTitle
-        defaultValues={{
-          address: template.address,
-          jurisdiction: template.jurisdiction,
-          permitType: template.permitType,
-          projectType: template.projectType,
-          scopeOfWork: template.scopeOfWork,
-          reviewContext: template.reviewContext,
-        }}
-        errors={errors}
-      />
+        <SubmissionFields
+          hideTitle
+          defaultValues={{
+            address: displayValues.address,
+            jurisdiction: displayValues.jurisdiction,
+            permitType: displayValues.permitType,
+            projectType: displayValues.projectType,
+            scopeOfWork: displayValues.scopeOfWork,
+            reviewContext: displayValues.reviewContext,
+          }}
+          errors={errors}
+        />
+      </Fragment>
 
       <div className="flex items-center justify-end gap-3 pt-2">
         <Link

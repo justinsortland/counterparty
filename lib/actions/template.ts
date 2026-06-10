@@ -77,7 +77,18 @@ type TemplateFieldErrors = Partial<
   Record<"name" | "address" | "jurisdiction" | "permitType" | "projectType" | "scopeOfWork", string>
 >;
 type UpdateTemplateFormErrors = TemplateFieldErrors & { form?: string };
-export type UpdateTemplateState = { errors: UpdateTemplateFormErrors } | null;
+
+type TemplateSubmittedValues = {
+  name: string;
+  address: string;
+  jurisdiction: string;
+  permitType: string;
+  projectType: string;
+  scopeOfWork: string;
+  reviewContext: string;
+};
+
+export type UpdateTemplateState = { errors: UpdateTemplateFormErrors; values: TemplateSubmittedValues } | null;
 
 const VALID_PERMIT_TYPES = Object.values(PermitType);
 const VALID_PROJECT_TYPES = Object.values(ProjectType);
@@ -95,7 +106,7 @@ export async function updateTemplate(
   const workspaceId = await getWorkspaceId(user.id);
 
   const templateId = (formData.get("templateId") as string)?.trim();
-  if (!templateId) return { errors: { form: "Missing template ID." } };
+  if (!templateId) return { errors: { form: "Missing template ID." }, values: { name: "", address: "", jurisdiction: "", permitType: "", projectType: "", scopeOfWork: "", reviewContext: "" } };
 
   const rawReturnTo = (formData.get("returnTo") as string | null)?.trim();
   const redirectTo = /^\/submissions\/templates(\?.*)?$/.test(rawReturnTo ?? "")
@@ -106,7 +117,7 @@ export async function updateTemplate(
     where: { id: templateId, workspaceId },
     select: { id: true },
   });
-  if (!existing) return { errors: { form: "Template not found." } };
+  if (!existing) return { errors: { form: "Template not found." }, values: { name: "", address: "", jurisdiction: "", permitType: "", projectType: "", scopeOfWork: "", reviewContext: "" } };
 
   const rawName = (formData.get("name") as string)?.trim();
   const baseName = rawName || "Untitled template";
@@ -117,7 +128,18 @@ export async function updateTemplate(
   const scopeOfWork = (formData.get("scopeOfWork") as string)?.trim();
   const reviewContext = (formData.get("reviewContext") as string)?.trim() || null;
 
+  const values: TemplateSubmittedValues = {
+    name: rawName ?? "",
+    address: address ?? "",
+    jurisdiction: jurisdiction ?? "",
+    permitType: (permitType as string) ?? "",
+    projectType: (projectType as string) ?? "",
+    scopeOfWork: scopeOfWork ?? "",
+    reviewContext: reviewContext ?? "",
+  };
+
   const errors: UpdateTemplateFormErrors = {};
+  if (!rawName) errors.name = "Template name is required.";
   if (!address) errors.address = "Address is required.";
   if (!jurisdiction) errors.jurisdiction = "Jurisdiction is required.";
   if (!permitType || !VALID_PERMIT_TYPES.includes(permitType))
@@ -125,7 +147,7 @@ export async function updateTemplate(
   if (!projectType || !VALID_PROJECT_TYPES.includes(projectType))
     errors.projectType = "Project type is required.";
   if (!scopeOfWork) errors.scopeOfWork = "Scope of work is required.";
-  if (Object.keys(errors).length > 0) return { errors };
+  if (Object.keys(errors).length > 0) return { errors, values };
 
   // Dedupe name against all other templates in the workspace (excluding self).
   const siblings = await db.submissionTemplate.findMany({
@@ -140,7 +162,7 @@ export async function updateTemplate(
       data: { name, permitType, projectType, address, jurisdiction, scopeOfWork, reviewContext },
     });
   } catch {
-    return { errors: { form: "Something went wrong. Please try again." } };
+    return { errors: { form: "Something went wrong. Please try again." }, values };
   }
 
   revalidatePath("/submissions/templates");
