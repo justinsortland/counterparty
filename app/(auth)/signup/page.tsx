@@ -15,6 +15,16 @@ export default function SignupPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    if (!email.trim()) {
+      setError("Email is required.");
+      return;
+    }
+    if (!password) {
+      setError("Password is required.");
+      return;
+    }
+
     setLoading(true);
 
     const supabase = createClient();
@@ -54,7 +64,7 @@ export default function SignupPage() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} noValidate className="space-y-4">
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-zinc-700 mb-1">
             Email
@@ -87,7 +97,9 @@ export default function SignupPage() {
         </div>
 
         {error && (
-          <p className="text-sm text-red-600">{error}</p>
+          <p className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </p>
         )}
 
         <Button type="submit" className="w-full" disabled={loading}>
