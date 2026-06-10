@@ -189,18 +189,27 @@ export default async function NewSubmissionPage({
               ))}
 
               {unselectedChips.length === 0 && !selectedTemplate && (
-                <span className="text-xs text-zinc-400">
+                <span className="text-xs text-zinc-500">
                   No templates match.{" "}
                   <Link
                     href={pickerUrl({ sort })}
-                    className="text-zinc-400 hover:text-zinc-600"
+                    className="text-zinc-500 hover:text-zinc-700"
                   >
-                    × Clear search
+                    Clear search
                   </Link>
                 </span>
               )}
             </div>
           </div>
+        )}
+
+        {totalTemplateCount === 0 && (
+          <p className="mb-5 text-xs text-zinc-400">
+            No templates yet.{" "}
+            <Link href="/submissions/templates" className="text-zinc-400 hover:text-zinc-600">
+              Go to Templates →
+            </Link>
+          </p>
         )}
 
         <SubmissionForm defaultValues={defaultValues} />
