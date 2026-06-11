@@ -283,7 +283,7 @@ function ReviewBody({ review }: { review: ReviewRecord }) {
       {/* Missing docs */}
       {review.missingDocs.length > 0 && (
         <div className="mb-4">
-          <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-zinc-400">
+          <p className="mb-1.5 text-xs font-medium text-zinc-400">
             Missing Documentation
           </p>
           <ul className="space-y-1">
@@ -299,7 +299,7 @@ function ReviewBody({ review }: { review: ReviewRecord }) {
 
       {/* Artifact snapshot */}
       <div className="pt-3 border-t border-zinc-100">
-        <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-zinc-400">
+        <p className="mb-1.5 text-xs font-medium text-zinc-400">
           Documents at review time
         </p>
         {parsedArtifacts.length > 0 ? (
@@ -335,7 +335,7 @@ function ReviewDeltaSection({
 
   return (
     <div className="mb-4 rounded-lg border border-zinc-100 bg-zinc-50 px-4 py-3">
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">
+      <p className="mb-2 text-xs font-medium text-zinc-400">
         Changes since revision {previousReview.revisionNumber}
       </p>
       {!delta.hasChanges ? (
@@ -602,7 +602,7 @@ export default async function SubmissionDetailPage({
                 {STATUS_LABELS[submission.status]}
               </span>
             </div>
-            <p className="mt-1 text-sm text-zinc-400">{submission.address}</p>
+            <p className="mt-1 text-sm text-zinc-500">{submission.address}</p>
           </div>
           <div className="flex items-center gap-3">
             <Link
@@ -754,7 +754,7 @@ export default async function SubmissionDetailPage({
 
           {artifactsWithUrls.length === 0 ? (
             <div className="py-8 text-center">
-              <p className="text-sm text-zinc-400">No files attached yet.</p>
+              <p className="text-sm text-zinc-500">No files attached yet.</p>
             </div>
           ) : (
             <ul className="divide-y divide-zinc-100">
@@ -785,7 +785,7 @@ export default async function SubmissionDetailPage({
                     <LabelSelect
                       name="documentLabel"
                       defaultValue={a.documentLabel ?? ""}
-                      className="rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs text-zinc-700 outline-none focus:border-zinc-400 max-w-52"
+                      className="rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs text-zinc-700 outline-none focus:border-zinc-400 focus:ring-2 focus:ring-ring/20 max-w-52"
                     >
                       <option value="">— unlabeled —</option>
                       {profile.requiredDocuments.map((doc) => (
@@ -833,8 +833,8 @@ export default async function SubmissionDetailPage({
 
           {submission.reviews.length === 0 ? (
             <div className="py-8 text-center">
-              <p className="text-sm text-zinc-400">No reviews yet.</p>
-              <p className="mt-1 text-xs text-zinc-300">
+              <p className="text-sm text-zinc-500">No reviews yet.</p>
+              <p className="mt-1 text-xs text-zinc-400">
                 Request a review above to get AI feedback on your submission.
               </p>
             </div>
