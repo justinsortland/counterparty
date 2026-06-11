@@ -132,7 +132,7 @@ export function TemplatesTable({ templates, returnTo }: { templates: TemplateRow
           <button
             type="button"
             onClick={() => setSelectedIds(new Set())}
-            className="ml-auto text-xs text-zinc-400 hover:text-zinc-600"
+            className="ml-auto text-xs text-zinc-400 hover:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             Clear selection
           </button>
