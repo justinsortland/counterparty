@@ -12,6 +12,7 @@ import { LabelSelect } from "./_components/label-select";
 import { DeleteButton } from "../_components/delete-button";
 import { DuplicateButton } from "../_components/duplicate-button";
 import { SaveTemplateButton } from "./_components/save-template-button";
+import { RequestReviewButton } from "./_components/request-review-button";
 import { selectProfile } from "@/lib/ai/review-profiles";
 import { computeCoverage } from "@/lib/ai/document-coverage";
 import { computeDelta } from "@/lib/ai/review-delta";
@@ -822,12 +823,7 @@ export default async function SubmissionDetailPage({
             )}
             <form action={requestReview}>
               <input type="hidden" name="submissionId" value={submission.id} />
-              <button
-                type="submit"
-                className={buttonVariants({ variant: "default", size: "sm" })}
-              >
-                Request Review
-              </button>
+              <RequestReviewButton />
             </form>
           </div>
 
