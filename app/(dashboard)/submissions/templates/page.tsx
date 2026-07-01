@@ -72,7 +72,7 @@ export default async function TemplatesPage({
           <Link href="/submissions" className="text-sm text-zinc-400 hover:text-zinc-600">
             ← Submissions
           </Link>
-          <h1 className="mt-1 text-lg font-semibold text-zinc-900">Templates</h1>
+          <h1 className="mt-2 text-lg font-semibold text-zinc-900">Templates</h1>
         </div>
       </div>
 
