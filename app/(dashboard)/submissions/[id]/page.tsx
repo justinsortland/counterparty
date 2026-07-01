@@ -591,7 +591,7 @@ export default async function SubmissionDetailPage({
         >
           ← Submissions
         </Link>
-        <div className="mt-2 flex items-start justify-between gap-4">
+        <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-2.5">
               <h1 className="text-lg font-semibold text-zinc-900">
@@ -605,7 +605,7 @@ export default async function SubmissionDetailPage({
             </div>
             <p className="mt-1 text-sm text-zinc-500">{submission.address}</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-end gap-3">
             <Link
               href={`/submissions/${submission.id}/edit?returnTo=${encodeURIComponent(backUrl)}`}
               className={buttonVariants({ variant: "ghost", size: "sm" })}
