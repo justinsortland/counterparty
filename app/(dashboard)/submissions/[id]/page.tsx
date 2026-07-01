@@ -446,7 +446,7 @@ function ReviewCard({
           Revision {review.revisionNumber}
         </span>
         {isLatest && (
-          <span className="rounded-full bg-zinc-100 px-1.5 py-0.5 text-xs font-medium text-zinc-500">
+          <span className="inline-flex items-center rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-500">
             Latest
           </span>
         )}
