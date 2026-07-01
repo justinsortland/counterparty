@@ -188,7 +188,7 @@ function SectionHeader({
 }
 
 const TH =
-  "px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-zinc-500";
+  "px-4 py-2.5 text-left text-xs font-medium text-zinc-500";
 const TD = "px-4 py-3 text-sm";
 
 // ---------------------------------------------------------------------------
