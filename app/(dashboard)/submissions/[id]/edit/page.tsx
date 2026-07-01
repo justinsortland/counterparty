@@ -49,7 +49,7 @@ export default async function EditSubmissionPage({
           href={`/submissions/${id}${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`}
           className="text-sm text-zinc-400 hover:text-zinc-600"
         >
-          ← Back to submission
+          ← Submission
         </Link>
         <h1 className="mt-2 text-lg font-semibold text-zinc-900">
           Edit Submission

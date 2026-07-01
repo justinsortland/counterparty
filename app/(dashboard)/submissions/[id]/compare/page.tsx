@@ -176,7 +176,7 @@ export default async function ComparePage({
           href={`/submissions/${id}`}
           className="text-sm text-zinc-400 hover:text-zinc-600"
         >
-          ← Back to submission
+          ← Submission
         </Link>
         <PrintButton />
       </div>
