@@ -169,6 +169,8 @@ Selected improvements planned for future versions:
 
 ## Internal Docs
 
+- [Technical Writeup](docs/TECHNICAL_WRITEUP.md): current implementation reference
+- [Demo Script](docs/DEMO_SCRIPT.md): walkthrough guide for recording or live demos
 - [Product Requirements](docs/PRD.md)
-- [Architecture](docs/ARCHITECTURE.md)
+- [Architecture](docs/ARCHITECTURE.md): historical planning document; may not reflect the current implementation
 - [Tasks](docs/TASKS.md)
