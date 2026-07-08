@@ -21,6 +21,7 @@ export type SubmissionRow = {
   projectType: ProjectType;
   status: SubmissionStatus;
   updatedAt: string; // ISO string — serialized from server component
+  reviewCount: number;
 };
 
 // ---------------------------------------------------------------------------
@@ -187,6 +188,7 @@ export function SubmissionsTable({
               <th className={TH}>Permit Type</th>
               <th className={TH}>Project Type</th>
               <th className={TH}>Status</th>
+              <th className={TH}>Reviews</th>
               <th className={TH}>Updated</th>
               <th className={`${TH} w-px`}><span className="sr-only">Actions</span></th>
             </tr>
@@ -235,6 +237,13 @@ export function SubmissionsTable({
                   >
                     {STATUS_LABELS[s.status]}
                   </span>
+                </td>
+                <td className={`${TD} text-zinc-500`}>
+                  {s.reviewCount === 0
+                    ? "No reviews"
+                    : s.reviewCount === 1
+                    ? "1 review"
+                    : `${s.reviewCount} reviews`}
                 </td>
                 <td className={`${TD} text-zinc-400`}>
                   {formatDate(s.updatedAt)}

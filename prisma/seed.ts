@@ -5,8 +5,15 @@
  *   Log in to the app at least once so your workspace is bootstrapped,
  *   then run:  npm run db:seed
  *
- * Idempotent: if all 5 demo submissions and 3 demo templates already exist,
- * the script prints "Demo data already seeded — skipping." and exits.
+ * To target a specific account:
+ *   DEMO_EMAIL=you@example.com npm run db:seed
+ *   DEMO_WORKSPACE_ID=<id> npm run db:seed
+ *
+ * Without either env var the script falls back to the first workspace in the
+ * database (original behavior, safe for single-workspace setups).
+ *
+ * Idempotent: if all 5 demo submissions and 3 demo templates already exist in
+ * the target workspace, the script prints "Demo data already seeded" and exits.
  * If only partial demo data exists (e.g. from an interrupted previous run),
  * the script cleans up those records and re-seeds the full dataset.
  */
@@ -66,20 +73,62 @@ async function cleanPartialDemoData(workspaceId: string): Promise<void> {
 
 async function main() {
   // -------------------------------------------------------------------------
-  // Discover the local workspace
+  // Discover the target workspace
+  // Priority: DEMO_WORKSPACE_ID > DEMO_EMAIL > first workspace (fallback)
   // -------------------------------------------------------------------------
-  const member = await db.workspaceMember.findFirst({
-    select: { workspaceId: true },
-  });
+  const envWorkspaceId = process.env.DEMO_WORKSPACE_ID?.trim();
+  const envEmail = process.env.DEMO_EMAIL?.trim();
 
-  if (!member) {
-    console.error(
-      "No workspace found. Log in to the app first, then run this seed."
-    );
-    process.exit(1);
+  let workspaceId: string;
+  let targetLabel: string;
+
+  if (envWorkspaceId) {
+    const workspace = await db.workspace.findUnique({
+      where: { id: envWorkspaceId },
+      select: { id: true },
+    });
+    if (!workspace) {
+      console.error(`No workspace found with id "${envWorkspaceId}".`);
+      process.exit(1);
+    }
+    workspaceId = workspace.id;
+    targetLabel = `workspace ${workspaceId}`;
+  } else if (envEmail) {
+    const user = await db.user.findUnique({
+      where: { email: envEmail },
+      select: { id: true },
+    });
+    if (!user) {
+      console.error(
+        `No user found with email "${envEmail}". Log in to the app first, then re-run.`
+      );
+      process.exit(1);
+    }
+    const member = await db.workspaceMember.findFirst({
+      where: { userId: user.id },
+      select: { workspaceId: true },
+    });
+    if (!member) {
+      console.error(
+        `User "${envEmail}" exists but has no workspace. Log in to the app first, then re-run.`
+      );
+      process.exit(1);
+    }
+    workspaceId = member.workspaceId;
+    targetLabel = `${envEmail} (workspace ${workspaceId})`;
+  } else {
+    const member = await db.workspaceMember.findFirst({
+      select: { workspaceId: true },
+    });
+    if (!member) {
+      console.error(
+        "No workspace found. Log in to the app first, then run this seed."
+      );
+      process.exit(1);
+    }
+    workspaceId = member.workspaceId;
+    targetLabel = `workspace ${workspaceId} (first found)`;
   }
-
-  const workspaceId = member.workspaceId;
 
   // -------------------------------------------------------------------------
   // Idempotency check — skip only if the full demo dataset is present
@@ -96,16 +145,18 @@ async function main() {
     existingTemplateCount === DEMO_TEMPLATE_NAMES.length;
 
   if (fullySeeded) {
-    console.log("Demo data already seeded — skipping.");
+    console.log(`Demo data already seeded for ${targetLabel} — skipping.`);
     return;
   }
 
   if (existingSubmissionCount > 0 || existingTemplateCount > 0) {
-    console.log("Partial demo data found — cleaning up before reseeding...");
+    console.log(
+      `Partial demo data found for ${targetLabel} — cleaning up before reseeding...`
+    );
     await cleanPartialDemoData(workspaceId);
   }
 
-  console.log(`Seeding demo data into workspace ${workspaceId}...`);
+  console.log(`Seeding demo data into ${targetLabel}...`);
 
   // -------------------------------------------------------------------------
   // Insert everything in a single transaction so partial failures can't
@@ -699,9 +750,9 @@ async function main() {
     { timeout: 30_000 }
   );
 
-  console.log("Demo data seeded successfully.");
+  console.log(`Demo data seeded successfully into ${targetLabel}.`);
   console.log(
-    "  5 submissions, 8 artifacts, 4 reviews, 9 review issues, 3 templates"
+    "  5 submissions, 8 artifacts, 4 reviews, 10 review issues, 3 templates"
   );
 }
 

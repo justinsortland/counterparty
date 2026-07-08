@@ -46,6 +46,7 @@ async function getSubmissions(workspaceId: string, filters: SubmissionFilters = 
       projectType: true,
       status: true,
       updatedAt: true,
+      _count: { select: { reviews: true } },
     },
   });
 }
@@ -96,6 +97,7 @@ export default async function SubmissionsPage({
   const rows = submissions.map((s) => ({
     ...s,
     updatedAt: s.updatedAt.toISOString(),
+    reviewCount: s._count.reviews,
   }));
 
   // Build returnTo so per-row delete redirects back to the filtered list
