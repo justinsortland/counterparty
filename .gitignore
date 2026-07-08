@@ -28,3 +28,4 @@ next-env.d.ts
 .agents/
 
 .claude/agents/
+.env*.backup
