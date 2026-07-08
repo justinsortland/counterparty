@@ -6,6 +6,24 @@ Permit review workflow simulator for residential construction and renovation.
 
 Watch the short walkthrough: [Counterparty Demo](https://youtu.be/-JJuIGjXw1Y)
 
+## Screenshots
+
+### Dashboard
+
+![Dashboard](docs/screenshots:dashboard.png)
+
+### Review Detail
+
+![Review detail](docs/screenshots:submission-detail.png)
+
+### Revision Compare
+
+![Revision compare](docs/screenshots:compare-revisions.png)
+
+### Printable Report
+
+![Printable report](docs/screenshots:printable-report.png)
+
 ## Overview
 
 Getting a residential permit approved is opaque. Most homeowners and small contractors do not know what plan checkers look for, and first submissions routinely get rejected for missing documents, non-compliant scope descriptions, or code violations. Counterparty lets you pressure-test a permit application before you show up at city hall.
