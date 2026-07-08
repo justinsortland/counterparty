@@ -46,6 +46,7 @@ export async function uploadArtifact(formData: FormData): Promise<void> {
     .upload(storagePath, buffer, { contentType: file.type, upsert: false });
 
   if (storageError) {
+    console.error("[uploadArtifact] storage error:", storageError.message);
     redirect(`/submissions/${submissionId}?upload_error=1`);
   }
 
