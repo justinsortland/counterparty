@@ -353,7 +353,7 @@ async function main() {
           promptVersion: "v5",
           verdict: "CONDITIONAL",
           summary:
-            "The resubmittal resolves the critical rear setback issue — the revised site plan confirms the structure is now set back 4.5 ft, meeting the minimum requirement. Energy compliance documentation has been added and is adequate. One outstanding item remains: utility service capacity documentation for water and sewer expansion has not been provided. The south elevation label is also still missing. Approval can proceed once the utility documentation is submitted.",
+            "The resubmittal resolves the critical rear setback issue; the revised site plan confirms the structure is now set back 4.5 ft, meeting the minimum requirement. Energy compliance documentation has been added and is adequate. One outstanding item remains: utility service capacity documentation for water and sewer expansion has not been provided. The south elevation label is also still missing. Approval can proceed once the utility documentation is submitted.",
           missingDocs: ["Utility service capacity documentation"],
           rawPayload: {
             verdict: "CONDITIONAL",
@@ -479,7 +479,7 @@ async function main() {
           promptVersion: "v5",
           verdict: "LIKELY_APPROVE",
           summary:
-            "The submittal is complete and well-documented. The floor plan clearly identifies the non-load-bearing wall to be removed and the new kitchen layout with dimensions. The electrical plan shows the subpanel addition and range circuit. One minor item: the exhaust fan CFM rating is not specified on the plan — this should be noted on the permit card but does not require resubmittal. The project is recommended for approval.",
+            "The submittal is complete and well-documented. The floor plan clearly identifies the non-load-bearing wall to be removed and the new kitchen layout with dimensions. The electrical plan shows the subpanel addition and range circuit. One minor item: the exhaust fan CFM rating is not specified on the plan; this should be noted on the permit card but does not require resubmittal. The project is recommended for approval.",
           missingDocs: [],
           rawPayload: {
             verdict: "LIKELY_APPROVE",
@@ -587,7 +587,7 @@ async function main() {
           promptVersion: "v5",
           verdict: "CONDITIONAL",
           summary:
-            "The single-line diagram and panel schedule are present but incomplete. Load calculations show the upgraded 200A service at 97% capacity — documentation confirming the utility service entrance conductor rating has not been included. AFCI protection is not shown for bedroom circuits as required by NEC 210.12. The ground rod location is also absent from the plan. Resubmittal addressing these items is required.",
+            "The single-line diagram and panel schedule are present but incomplete. Load calculations show the upgraded 200A service at 97% capacity; documentation confirming the utility service entrance conductor rating has not been included. AFCI protection is not shown for bedroom circuits as required by NEC 210.12. The ground rod location is also absent from the plan. Resubmittal addressing these items is required.",
           missingDocs: ["Panel schedule with load calculations"],
           rawPayload: {
             verdict: "CONDITIONAL",

@@ -352,7 +352,7 @@ function ReviewDeltaSection({
                     <span className="mt-0.5 shrink-0 font-semibold text-green-600">✓</span>
                     <span>
                       <span className="font-medium">{issue.category}</span>
-                      {" — "}
+                      {": "}
                       {issue.description}
                     </span>
                   </li>
@@ -369,7 +369,7 @@ function ReviewDeltaSection({
                     <span className="mt-0.5 shrink-0 font-semibold text-red-500">+</span>
                     <span>
                       <span className="font-medium">{issue.category}</span>
-                      {" — "}
+                      {": "}
                       {issue.description}
                     </span>
                   </li>
@@ -386,7 +386,7 @@ function ReviewDeltaSection({
                     <span className="mt-0.5 shrink-0">→</span>
                     <span>
                       <span className="font-medium">{issue.category}</span>
-                      {" — "}
+                      {": "}
                       {issue.description}
                     </span>
                   </li>
@@ -709,7 +709,7 @@ export default async function SubmissionDetailPage({
                         <span className="text-zinc-500">
                           {lc.docLabel}
                           <span className="ml-1 text-xs text-zinc-400">
-                            — not individually confirmed
+                            (not individually confirmed)
                           </span>
                         </span>
                       </li>
@@ -728,7 +728,7 @@ export default async function SubmissionDetailPage({
               ))}
             </div>
             <p className="text-xs text-zinc-400">
-              Typical requirements — confirm with your jurisdiction. Mark
+              Typical requirements. Confirm with your jurisdiction. Mark
               uploaded files with a document type to track coverage.
             </p>
           </div>
@@ -739,7 +739,7 @@ export default async function SubmissionDetailPage({
           <div className="py-4 border-b border-zinc-100">
             {upload_error && (
               <p className="mb-3 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-xs text-red-700">
-                Upload failed — check that the file is valid and try again.
+                Upload failed. Check that the file is valid and try again.
               </p>
             )}
             <form action={uploadArtifact} className="flex items-center gap-3">
@@ -788,7 +788,7 @@ export default async function SubmissionDetailPage({
                       defaultValue={a.documentLabel ?? ""}
                       className="rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs text-zinc-700 outline-none focus:border-zinc-400 focus:ring-2 focus:ring-ring/20 max-w-52"
                     >
-                      <option value="">— unlabeled —</option>
+                      <option value="">(unlabeled)</option>
                       {profile.requiredDocuments.map((doc) => (
                         <option key={doc} value={doc}>
                           {doc}
@@ -818,7 +818,7 @@ export default async function SubmissionDetailPage({
           <div className="py-4 border-b border-zinc-100">
             {review_error && (
               <p className="mb-3 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-xs text-red-700">
-                Review failed — check server logs for details.
+                Review failed. Check server logs for details.
               </p>
             )}
             <form action={requestReview}>

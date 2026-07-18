@@ -309,7 +309,7 @@ export default async function ComparePage({
                                     {issue.severity.charAt(0) + issue.severity.slice(1).toLowerCase()}
                                   </span>
                                   <span className="font-medium text-zinc-700">{issue.category}</span>
-                                  {" — "}
+                                  {": "}
                                   <span className="text-zinc-600">{issue.description}</span>
                                 </span>
                               </div>
@@ -335,7 +335,7 @@ export default async function ComparePage({
                                     {issue.severity.charAt(0) + issue.severity.slice(1).toLowerCase()}
                                   </span>
                                   <span className="font-medium text-zinc-700">{issue.category}</span>
-                                  {" — "}
+                                  {": "}
                                   <span className="text-zinc-600">{issue.description}</span>
                                 </span>
                               </div>
@@ -356,7 +356,7 @@ export default async function ComparePage({
                                 <span className="mt-0.5 shrink-0">→</span>
                                 <span>
                                   <span className="font-medium">{issue.category}</span>
-                                  {" — "}
+                                  {": "}
                                   {issue.description}
                                 </span>
                               </div>

@@ -24,7 +24,7 @@ export function SaveTemplateButton({
 
   async function handleClick() {
     const trimmed = defaultName.trim() || "Untitled template";
-    const name = window.prompt("Save as template — name:", trimmed);
+    const name = window.prompt("Template name:", trimmed);
     if (name === null) return; // cancelled
     const formData = new FormData();
     formData.set("submissionId", submissionId);
