@@ -4,7 +4,7 @@ Permit review workflow simulator for residential construction and renovation.
 
 ## Demo Video
 
-Watch the short walkthrough: [Counterparty Demo](https://youtu.be/-JJuIGjXw1Y)
+Watch the short walkthrough: [Counterparty Demo](https://www.youtube.com/watch?v=hC9Pf9LV-sg)
 
 ## Overview
 
